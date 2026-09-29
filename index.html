@@ -1386,7 +1386,7 @@ const ICON = id => `<svg class="ic"><use href="#i-${id}"/></svg>`;
 const ADULT = `<span class="adult">${ICON('adult')}CẦN NGƯỜI LỚN</span>`;
 const STEPS = [
   {t:'Chuẩn bị khung', adult:false, do:['Dán băng keo màu đánh dấu mũi máy.'], warn:['Đồ ở giữa phải thấp, cánh không được đụng.'], chk:['Khung nằm phẳng trên bàn.']},
-  {t:'Gắn 4 động cơ', adult:false, do:['M1 (trước phải) và M3 (sau trái) quay ngược ↺, thường dây đen, trắng.', 'M2 (sau phải) và M4 (trước trái) quay xuôi ↻, thường dây đỏ, xanh.', 'Mũi tên trên vòng tròn trong hình chỉ chiều quay khi nhìn từ trên xuống.'], warn:['Màu dây có thể sai. Nhờ người lớn chạm dây vào pin 1 giây để xem chiều quay.'], chk:['Nhìn từ trên: M1 ↺, M2 ↻, M3 ↺, M4 ↻.']},
+  {t:'Gắn 4 động cơ', adult:false, do:['M1 (trước phải) và M3 (sau trái) quay ngược ↺, thường dây đen, trắng.', 'M2 (sau phải) và M4 (trước trái) quay xuôi ↻, thường dây đỏ, xanh.', 'Mũi tên trên vòng tròn chỉ chiều quay khi nhìn từ trên xuống, giống <a href="https://github.com/espressif/esp-drone/blob/master/docs/_static/espdrone_s2_v1_2_diretion.png" target="_blank" rel="noopener">ảnh gốc ESP-Drone</a>.', 'Không dùng quy ước Betaflight (chiều ngược lại).'], warn:['Màu dây có thể sai. Nhờ người lớn chạm dây vào pin 1 giây để xem chiều quay.'], chk:['Nhìn từ trên: M1 ↺, M2 ↻, M3 ↺, M4 ↻.']},
   {t:'Hàn mạch động cơ', adult:true, do:['4 MOSFET, mỗi cái kèm 100 Ω, 10 kΩ và diode SS14.'], warn:['Vạch trắng của diode quay về dây đỏ pin.'], chk:['Đo: dây đỏ và dây đen pin không chạm nhau.']},
   {t:'Nối dây động cơ', adult:true, do:['Dây + (đỏ/trắng) → điện pin.', 'Dây − (xanh/đen) → chân D của MOSFET.'], warn:['Nối ngược là quay ngược, phải hàn lại.'], chk:['M1 → 4, M2 → 33, M3 → 32, M4 → 25.']},
   {t:'Đầu cắm, tụ, bộ đổi điện', adult:true, do:['Hàn đầu cắm pin, tụ lớn (chân dài là +), bộ đổi điện 3,3 V.'], warn:['Đo đầu ra bộ đổi điện trước khi nối bộ não.'], chk:['Đầu ra 3,25 – 3,35 vôn.']},
@@ -1396,7 +1396,7 @@ const STEPS = [
   {t:'Mắt nhìn sàn + thước đo (mặt dưới)', adult:false, do:['Mắt nhìn sàn ở giữa, nhìn thẳng xuống.', 'Thước đo gần mũi, không bị che.'], warn:['Không sờ ống kính. Bóc nilon trên thước đo nếu có.', 'Ở màn 5, máy càng lúc càng trôi xa thay vì quay về: xoay mắt nhìn sàn 90° rồi thử lại.'], chk:['Khi nạp, cả hai báo [OK].']},
   {t:'Mắt thông minh ở mũi', adult:false, do:['Dán XIAO ở mũi, camera nhìn về trước.', 'D6 → 26, D7 → 27, 3V3 và GND chung.'], warn:['Không dùng miếng hàn BAT dưới XIAO.'], chk:['Đưa bóng đỏ trước camera: Serial Monitor hiện seen=1.']},
   {t:'Gom dây cho gọn', adult:false, do:['Ép dây sát thân, dán keo nến hoặc dây rút.'], warn:['Dây cảm biến ngắn hơn 10 cm, tránh xa dây động cơ.'], chk:['Xoay tay mỗi cánh 1 vòng: không đụng gì.']},
-  {t:'Lắp cánh quạt', adult:false, do:['Cánh <b>B</b> (quay ngược ↺) vào M1 và M3.', 'Cánh <b>A</b> (quay xuôi ↻) vào M2 và M4. Mặt có chữ lên trên.', 'Giống hệt ảnh hướng dẫn chính thức của ESP-Drone.'], warn:['Chỉ lắp cánh sau màn 1 (thử không cánh).'], chk:['Ga 15 %: cả 4 cánh thổi gió xuống.']},
+  {t:'Lắp cánh quạt', adult:false, do:['Cánh <b>B</b> (quay ngược ↺) vào M1 và M3.', 'Cánh <b>A</b> (quay xuôi ↻) vào M2 và M4. Mặt có chữ lên trên.', 'Đối chiếu với <a href="https://github.com/espressif/esp-drone/blob/master/docs/_static/espdrone_s2_v1_2_diretion.png" target="_blank" rel="noopener">ảnh gốc ESP-Drone</a>: M4-A, M1-B, M3-B, M2-A.'], warn:['Chỉ lắp cánh sau màn 1 (thử không cánh).'], chk:['Ga 15 %: cả 4 cánh thổi gió xuống.']},
 ];
 let cur = 0;
 const list = $('#stepList');

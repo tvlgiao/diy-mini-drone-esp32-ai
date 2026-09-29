@@ -142,6 +142,7 @@ svg .wire.hot{stroke-width:4}
 .part.on{opacity:1;transform:none}
 .part.cur .hl{stroke:var(--accent);stroke-width:3;stroke-dasharray:6 4;animation:dash 1s linear infinite}
 @keyframes dash{to{stroke-dashoffset:-20}}
+.part.cur .hl.dash-ccw{animation-direction:reverse}
 .under{stroke-dasharray:5 4}
 .spin{transform-box:fill-box;transform-origin:center;animation:rot var(--dur,.35s) linear infinite}
 .spin.ccw{animation-direction:reverse}
@@ -1295,7 +1296,7 @@ const layer = step => el('g', {class:'part', 'data-step':step}, A);
 (function(){
   const g = layer(2);
   M.forEach(([id, x, y, d]) => {
-    el('circle', {class:'hl', cx:x, cy:y, r:15, fill:'#8b949e', stroke:'var(--ink)', 'stroke-width':1.5}, g);
+    el('circle', {class:'hl dash-' + d, cx:x, cy:y, r:15, fill:'#8b949e', stroke:'var(--ink)', 'stroke-width':1.5}, g);
     el('circle', {cx:x, cy:y, r:3, fill:'var(--ink)'}, g);
     const lx = x > 300 ? x + 58 : x - 58, ly = y < 300 ? y - 50 : y + 58;
     el('text', {x:lx, y:ly, 'text-anchor':'middle', 'font-size':15, 'font-weight':700, style:'font-family:var(--f-disp)'}, g, id);
@@ -1375,7 +1376,8 @@ const propEls = [];
   const g = layer(12);
   M.forEach(([, x, y, d]) => {
     const pg = el('g', {class:'spin ' + d, style:'--dur:0s'}, g);
-    el('ellipse', {class:'hl', cx:x, cy:y, rx:90, ry:12, fill:'var(--prop)', stroke:'var(--muted)', 'stroke-width':1}, pg);
+    el('ellipse', {class:'hl dash-' + d, cx:x, cy:y, rx:90, ry:12, fill:'var(--prop)', stroke:'var(--muted)', 'stroke-width':1}, pg);
+    el('circle', {cx:x + 80, cy:y, r:6, style:'fill:var(--accent)'}, pg);
     el('circle', {cx:x, cy:y, r:90, fill:'var(--prop)', stroke:'none', opacity:.35}, pg);
     propEls.push(pg);
     el('text', {x:x + (x > 300 ? 70 : -70), y:y + (y < 300 ? -116 : 132), 'text-anchor':'middle', 'font-size':16, style:'fill:var(--accent);font-weight:700'}, g, d === 'cw' ? 'cánh A' : 'cánh B');
@@ -1408,7 +1410,7 @@ function go(i){
   $('#stepBody').innerHTML = `<h3>Bước ${cur + 1}. ${s.t}</h3>${s.adult ? `<p>${ADULT}</p>` : ''}` +
     lines(s.do, 'do', 'hand') + lines(s.warn, 'warn', 'warn') + lines(s.chk, 'chk', 'check');
   $$('.part', A).forEach(p => { const n = +p.dataset.step; p.classList.toggle('on', n <= cur + 1); p.classList.toggle('cur', n === cur + 1); });
-  propEls.forEach(p => p.style.setProperty('--dur', cur === STEPS.length - 1 ? '.3s' : '0s'));
+  propEls.forEach(p => p.style.setProperty('--dur', cur === STEPS.length - 1 ? '1.2s' : '0s'));
   $$('button', list).forEach((b, j) => { b.classList.toggle('cur', j === cur); b.classList.toggle('done', j < cur); });
   $('#progS').style.width = ((cur + 1) / STEPS.length * 100) + '%';
   $('#cntS').textContent = `${cur + 1}/${STEPS.length}`;
@@ -1462,6 +1464,7 @@ const bodyArrow = el('text', {x:200, y:210, 'text-anchor':'middle', 'font-size':
 const simProps = SM.map(([id, x, y, d]) => {
   const g = el('g', {class:'spin ' + d, style:'--dur:0s'}, S);
   el('ellipse', {cx:x, cy:y, rx:70, ry:9, fill:'var(--prop)', stroke:'var(--muted)', 'stroke-width':1}, g);
+  el('circle', {cx:x + 62, cy:y, r:5, style:'fill:var(--accent)'}, g);
   el('circle', {cx:x, cy:y, r:11, fill:'#8b949e', stroke:'var(--ink)'}, S);
   el('text', {x:x, y:y + (y < 200 ? -80 : 92), 'text-anchor':'middle', 'font-size':13, 'font-weight':700, style:'font-family:var(--f-disp)'}, S, `${id} ${d === 'cw' ? '↻' : '↺'}`);
   return g;
@@ -1477,7 +1480,7 @@ function mix(){
   m.forEach((v, i) => {
     barEls[i].querySelector('i').style.height = (v / 65535 * 100) + '%';
     barEls[i].querySelector('span').textContent = v;
-    simProps[i].style.setProperty('--dur', v < 1500 ? '0s' : (0.08 + (1 - v / 65535) * 0.9).toFixed(2) + 's');
+    simProps[i].style.setProperty('--dur', v < 1500 ? '0s' : (0.4 + (1 - v / 65535) * 1.6).toFixed(2) + 's');
   });
   const right = m[0] + m[1], left = m[2] + m[3], front = m[0] + m[3], back = m[1] + m[2], ccwSet = m[0] + m[2], cwSet = m[1] + m[3];
   const eff = [];

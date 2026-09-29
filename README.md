@@ -23,3 +23,9 @@ ESP32-WROOM-32 DevKit · MPU6050 · PMW3901 (SPI) · VL53L1X · motor coreless 8
 Có hàn điện, pin LiPo và cánh quạt quay nhanh. Trẻ em chỉ làm khi có người lớn hướng dẫn.
 
 Trang là một tệp `index.html` tĩnh, không cần build.
+
+## Giấy phép
+
+Nội dung và mã trong repo này phát hành theo giấy phép [MIT](LICENSE).
+
+Đoạn công thức trộn động cơ trong tab "Thử động cơ" trích từ [ESP-Drone](https://github.com/espressif/esp-drone) (`power_distribution_stock.c`), thuộc giấy phép GPL-3.0 của dự án đó. Module `ai_uart.c` được thiết kế để biên dịch cùng ESP-Drone, nên firmware sau khi build tuân theo GPL-3.0.

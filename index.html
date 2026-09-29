@@ -1,0 +1,1429 @@
+<meta charset="utf-8">
+<title>Mini Drone ESP32 AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sách tranh kỹ thuật — mỗi tab mở bằng một hình minh họa lớn, chữ ngắn đi kèm biểu tượng; chi tiết cho người lớn gấp gọn */
+:root{
+  --bg:#eef0ea; --panel:#fbfcf8; --ink:#1c2420; --muted:#58665f; --line:#d3d9d0; --soft:#e3e7df;
+  --accent:#b0501c; --accent-ink:#fff;
+  --ok:#2f7d3b; --warn:#a86a00; --bad:#b3261e;
+  --n-vbat:#d0342c; --n-gnd:#4a504c; --n-i2c0:#2c66d4; --n-i2c1:#0e8f83; --n-spi:#8246c8; --n-mot:#d97e0b; --n-uart:#2f8f36; --n-led:#c23c86; --n-3v3:#e0632a;
+  --board:#0f5c4a; --board-ink:#e8f3ee; --frame:#2a2f2c; --prop:rgba(40,60,90,.16);
+  --term:#101a2e; --term-ink:#d7e2f5; --term-hl:#2b4a8a;
+  --f-disp:"Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121714; --panel:#1a211d; --ink:#e4ebe6; --muted:#9aa89f; --line:#2d3832; --soft:#222b26;
+  --accent:#e5864a; --accent-ink:#1a0f08;
+  --ok:#6cc27a; --warn:#e0a53a; --bad:#f07068;
+  --n-vbat:#ff6b5e; --n-gnd:#a7aea9; --n-i2c0:#6c9dff; --n-i2c1:#3fcfc0; --n-spi:#b88cff; --n-mot:#ffab3d; --n-uart:#6ed874; --n-led:#ff7ec2; --n-3v3:#ff9460;
+  --board:#1b6e59; --board-ink:#e8f3ee; --frame:#b9c2bc; --prop:rgba(160,190,230,.14);
+  --term:#0b1220; --term-ink:#d7e2f5; --term-hl:#2b4a8a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121714; --panel:#1a211d; --ink:#e4ebe6; --muted:#9aa89f; --line:#2d3832; --soft:#222b26;
+  --accent:#e5864a; --accent-ink:#1a0f08;
+  --ok:#6cc27a; --warn:#e0a53a; --bad:#f07068;
+  --n-vbat:#ff6b5e; --n-gnd:#a7aea9; --n-i2c0:#6c9dff; --n-i2c1:#3fcfc0; --n-spi:#b88cff; --n-mot:#ffab3d; --n-uart:#6ed874; --n-led:#ff7ec2; --n-3v3:#ff9460;
+  --board:#1b6e59; --board-ink:#e8f3ee; --frame:#b9c2bc; --prop:rgba(160,190,230,.14);
+  --term:#0b1220; --term-ink:#d7e2f5; --term-hl:#2b4a8a;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:0}
+.brand{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding-block:14px 6px}
+.brand h1{font:700 24px/1.1 var(--f-disp);margin:0;letter-spacing:.01em}
+.brand .spec{font-size:14px;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+nav.tabs button{flex:0 0 auto;display:flex;align-items:center;gap:6px;font:600 15px var(--f-disp);letter-spacing:.02em;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px 6px 9px;border-radius:6px;cursor:pointer}
+nav.tabs button .ic{width:20px;height:20px}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.tab{padding-top:22px}
+h2{font:700 26px/1.2 var(--f-disp);margin:0 0 4px;text-wrap:balance}
+h3{font:600 19px/1.3 var(--f-disp);margin:30px 0 10px;text-wrap:balance;display:flex;align-items:center;gap:8px}
+h3 .ic{width:26px;height:26px;color:var(--accent)}
+p{margin:0 0 10px;max-width:68ch}
+.lead{color:var(--muted);max-width:64ch;font-size:17px;margin-bottom:14px}
+.ic{width:24px;height:24px;flex:0 0 auto;display:inline-block;vertical-align:middle}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.tile{display:grid;grid-template-columns:64px minmax(0,1fr);gap:2px 14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.tile .pic{grid-row:1 / span 3;width:64px;height:64px;border-radius:14px;display:grid;place-items:center;background:var(--soft)}
+.tile .pic .ic{width:42px;height:42px}
+.tile b{font:700 17px var(--f-disp)}
+.tile small{font:12px var(--f-mono);color:var(--muted)}
+.tile span{font-size:15px}
+.danger{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;margin:6px 0 4px}
+.danger div{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--bad);border-radius:10px;padding:10px 12px;font-size:15px}
+.danger .ic{width:40px;height:40px;color:var(--bad)}
+.danger b{display:block;font:700 16px var(--f-disp)}
+.adult{display:inline-flex;align-items:center;gap:4px;font:700 12px var(--f-disp);letter-spacing:.04em;background:var(--bad);color:#fff;padding:2px 8px 2px 5px;border-radius:4px;vertical-align:2px;white-space:nowrap}
+.adult .ic{width:16px;height:16px}
+.note{display:flex;gap:10px;align-items:flex-start;border-left:4px solid var(--warn);background:var(--panel);padding:10px 14px;margin:12px 0;border-radius:0 8px 8px 0;max-width:88ch}
+.note .ic{color:var(--warn);margin-top:1px}
+.note.ok{border-color:var(--ok)} .note.ok .ic{color:var(--ok)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono,code,pre{font-family:var(--f-mono);font-size:.88em;font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.tbl + p{margin-top:10px}
+code{background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.chip{display:inline-block;font:600 11px var(--f-mono);padding:2px 7px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.chip.keep{color:var(--muted)} .chip.fix{color:var(--warn)} .chip.add{color:var(--ok)} .chip.opt{color:var(--n-i2c0)}
+pre.code{position:relative;background:#0f1512;color:#dbe7df;border-radius:8px;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);margin:8px 0 14px}
+pre.code code{background:none;padding:0;border-radius:0;color:inherit;font:inherit;font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0;overflow-wrap:normal}
+pre.code .cp{position:absolute;top:8px;right:8px;font:600 11px var(--f-mono);background:#26312b;color:#dbe7df;border:1px solid #3a4841;border-radius:5px;padding:3px 8px;cursor:pointer}
+pre.code .cp:hover{background:#34423a}
+details{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:8px 12px;margin:10px 0}
+details summary{cursor:pointer;font:600 15px var(--f-disp);display:flex;align-items:center;gap:8px}
+details summary .ic{width:20px;height:20px;color:var(--muted)}
+details[open] summary{margin-bottom:8px}
+.isteps{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.isteps li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.isteps li>div:last-child{min-width:0}
+.isteps .n{position:relative;width:52px;height:52px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--accent)}
+.isteps .n .ic{width:32px;height:32px}
+.isteps .n i{position:absolute;top:-6px;left:-6px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 12px/22px var(--f-disp);text-align:center;font-style:normal}
+.isteps b{font:700 16px var(--f-disp)}
+.isteps p{margin:2px 0 6px}
+.isteps pre.code,.isteps .term{margin-bottom:0}
+.isteps p:last-child{margin-bottom:0}
+.isteps details{background:var(--bg)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;margin:6px 0 16px}
+.flow .st{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px;padding:10px 8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font:600 13px var(--f-disp);text-align:center}
+.flow .st .ic{width:36px;height:36px;color:var(--accent)}
+.flow .ar{color:var(--muted);font:700 20px var(--f-disp)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.legend button{font:600 13px var(--f-body);display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:4px 10px;border-radius:99px;cursor:pointer}
+.legend button i{width:16px;height:5px;border-radius:2px;display:inline-block}
+.legend button[aria-pressed="true"]{border-color:var(--ink);background:var(--soft)}
+.svgbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.svgbox svg{display:block;min-width:760px;width:100%;height:auto}
+.svgbox.small svg{min-width:480px}
+.swipe{display:none;font-size:13px;color:var(--muted);margin:4px 0}
+svg text{fill:var(--ink);font-family:var(--f-body)}
+svg .mut{fill:var(--muted)}
+svg .mono{font-family:var(--f-mono)}
+.wire{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round;transition:opacity .2s,stroke-width .2s}
+.mod rect.box{fill:var(--panel);stroke:var(--ink);stroke-width:1.4;transition:stroke-width .2s}
+.mod{cursor:pointer}
+.mod:hover rect.box{stroke-width:2.4}
+svg.dimmed .wire:not(.hot){opacity:.12}
+svg.dimmed .mod:not(.hot){opacity:.35}
+svg .wire.hot{stroke-width:4}
+#asvg text:not([style*="#"]),#ssvg text,#dsvg text,#psvg text,#flowsvg text,#connsvg text{paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round}
+.asm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
+@media (max-width:860px){.asm{grid-template-columns:1fr}.stage{position:static}}
+.stage{position:sticky;top:108px}
+.stage svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.part{opacity:0;transform:translateY(-26px);transition:opacity .45s ease,transform .45s ease}
+.part.on{opacity:1;transform:none}
+.part.cur .hl{stroke:var(--accent);stroke-width:3;stroke-dasharray:6 4;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-20}}
+.under{stroke-dasharray:5 4}
+.spin{transform-box:fill-box;transform-origin:center;animation:rot var(--dur,.35s) linear infinite}
+.spin.ccw{animation-direction:reverse}
+@keyframes rot{to{transform:rotate(360deg)}}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.btn{font:600 15px var(--f-disp);border:1px solid var(--ink);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.35;cursor:default}
+.prog{flex:1 1 120px;height:6px;background:var(--soft);border-radius:3px;overflow:hidden;min-width:100px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.stepcard h3{margin-top:4px}
+.sline{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line)}
+.sline .ic{width:26px;height:26px}
+.sline.do .ic{color:var(--n-i2c0)} .sline.warn .ic{color:var(--bad)} .sline.chk .ic{color:var(--ok)}
+.steplist{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.steplist button{font:600 12px var(--f-mono);width:34px;height:30px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:5px;cursor:pointer}
+.steplist button.done{background:var(--soft)}
+.steplist button.cur{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.term{background:var(--term);color:var(--term-ink);border-radius:10px;padding:12px 14px;font:13px/1.7 var(--f-mono);overflow-x:auto;font-variant-ligatures:none;margin-top:6px}
+.term .t{color:#8fb0ff;font-weight:600}
+.term .row{display:flex;gap:12px;align-items:center;white-space:nowrap;padding:1px 6px;border-radius:4px}
+.term .row.sel{background:var(--term-hl)}
+.term .row em{font-style:normal;margin-left:auto;font:600 12px var(--f-body);background:#e5864a;color:#1a0f08;padding:1px 8px;border-radius:99px}
+.term .okk{color:#6ee27d;font-weight:600}
+.term .cm{color:#8fa3c0}
+.frame{display:flex;flex-wrap:wrap;gap:10px 8px;margin:8px 0}
+.fg{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fg .cells{display:flex;gap:2px}
+.fg .cells i{width:30px;height:34px;border-radius:5px;display:grid;place-items:center;font:600 11px var(--f-mono);font-style:normal;color:#fff}
+.fg .cells i{text-shadow:0 1px 2px rgba(0,0,0,.55)}
+#flowsvg,#connsvg{min-width:600px!important}
+.fg span{font-size:13px;text-align:center;max-width:96px;line-height:1.3}
+.game{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+.game figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.game svg{width:100%;height:auto;display:block;border-radius:6px}
+.game figcaption{font:600 15px var(--f-disp);margin-top:6px}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px}
+.lvl{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.lvl .ic{width:40px;height:40px;color:var(--accent)}
+.lvl i{display:block;font:700 12px var(--f-disp);letter-spacing:.08em;color:var(--muted);font-style:normal}
+.lvl b{display:block;font:700 16px var(--f-disp);margin:2px 0}
+.lvl span{font-size:14px;display:block}
+.lvl code{font-size:11px;display:inline-block;margin-top:4px}
+.sliders{display:grid;gap:12px}
+.sl label{display:flex;justify-content:space-between;gap:8px;font:600 14px var(--f-disp)}
+.sl label span{font:12px var(--f-mono);color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.bars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.bar{text-align:center;font:12px var(--f-mono)}
+.bar .tube{height:120px;background:var(--soft);border-radius:5px;position:relative;overflow:hidden;margin-bottom:4px}
+.bar .tube i{position:absolute;left:0;right:0;bottom:0;background:var(--n-mot);transition:height .12s}
+.readout{font-size:15px;background:var(--soft);border-radius:6px;padding:10px 12px;margin-top:10px;white-space:pre-wrap}
+.check{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:8px}
+.check li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.check li .ic{width:30px;height:30px;color:var(--muted)}
+.check li.done .ic{color:var(--ok)}
+.check input{width:20px;height:20px;accent-color:var(--ok);flex:0 0 auto;margin:0}
+.check label{cursor:pointer;font-size:15px}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.calc>div{display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.calc label{font:600 13px var(--f-disp);color:var(--muted);display:block;letter-spacing:.02em}
+.calc input{width:100%;font:15px var(--f-mono);padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--ink)}
+.scale{margin-top:16px;display:grid;gap:8px}
+.scale .row{display:grid;grid-template-columns:130px minmax(0,1fr) 80px;gap:10px;align-items:center;font-size:14px}
+.scale .track{height:22px;background:var(--soft);border-radius:6px;overflow:hidden}
+.scale .track i{display:block;height:100%;border-radius:6px;transition:width .2s}
+.scale .row b{font:700 15px var(--f-disp);text-align:right;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.kpi b{display:block;font:700 22px var(--f-disp);font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--muted)}
+.kpi.good b{color:var(--ok)} .kpi.warn b{color:var(--warn)} .kpi.bad b{color:var(--bad)}
+@media (max-width:640px){
+  .brand .spec{display:none}
+  .swipe{display:block}
+  nav.tabs button .t{display:none}
+  nav.tabs button[aria-selected="true"] .t{display:inline}
+  #bomTable thead{display:none}
+  #bomTable tbody tr{display:grid;grid-template-columns:30px minmax(0,1fr);column-gap:4px;padding:10px;border-bottom:1px solid var(--line)}
+  #bomTable tbody tr:last-child{border-bottom:0}
+  #bomTable td{border:0;padding:0;text-align:left}
+  #bomTable td:nth-child(1){grid-row:1 / span 5;padding-top:2px}
+  #bomTable td:nth-child(2){display:none}
+  #bomTable td:nth-child(3){font-weight:600}
+  #bomTable td:nth-child(4)::before{content:"Số lượng: ";color:var(--muted)}
+  #bomTable td:nth-child(5)::before{content:"Giá (nghìn đồng): ";color:var(--muted)}
+  #bomTable td:nth-child(6){color:var(--muted)}
+  #bomTable tfoot tr{display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px}
+  #bomTable tfoot td{border:0;padding:0}
+  #bomTable tfoot td:empty{display:none}
+  .scale .row{grid-template-columns:84px minmax(0,1fr) 60px}
+  .isteps li{grid-template-columns:44px minmax(0,1fr);padding:10px}
+  .isteps .n{width:44px;height:44px}
+}
+@media (prefers-reduced-motion: reduce){.part{transition:none}.spin,.part.cur .hl{animation:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-brain" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="12" y="12" width="24" height="24" rx="3"/><rect x="18" y="18" width="12" height="12" rx="1.5" fill="currentColor" fill-opacity=".2"/><path d="M18 6v6M24 6v6M30 6v6M18 36v6M24 36v6M30 36v6M6 18h6M6 24h6M6 30h6M36 18h6M36 24h6M36 30h6"/></g></symbol>
+    <symbol id="i-balance" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="24" cy="24" r="17"/><path d="M8 28 40 20"/><circle cx="24" cy="24" r="4" fill="currentColor"/><path d="M4 12a22 22 0 0 1 8-7M44 36a22 22 0 0 1-8 7"/></g></symbol>
+    <symbol id="i-eyedown" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16Q24 2 43 16Q24 30 5 16Z"/><circle cx="24" cy="16" r="5" fill="currentColor"/><path d="M24 30v12M18 36l6 6 6-6"/><path d="M6 45h36" stroke-dasharray="3 4"/></g></symbol>
+    <symbol id="i-ruler" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="4" width="20" height="9" rx="2" fill="currentColor" fill-opacity=".2"/><path d="M24 14v26" stroke-dasharray="3 3"/><path d="M19 35l5 6 5-6"/><path d="M6 44h36"/><path d="M38 14v26M35 14h6M35 40h6"/></g></symbol>
+    <symbol id="i-camera" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="5" y="14" width="38" height="26" rx="5"/><path d="M16 14l3-5h10l3 5"/><circle cx="24" cy="27" r="8"/><circle cx="24" cy="27" r="3" fill="currentColor"/></g></symbol>
+    <symbol id="i-motor" viewBox="0 0 48 48"><g stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M24 24C16 12 5 13 6 19s11 7 18 5c8 12 19 11 18 5s-11-7-18-5Z" fill="currentColor" fill-opacity=".2"/><circle cx="24" cy="24" r="5" fill="currentColor"/><path d="M8 34a20 20 0 0 0 10 8M40 14a20 20 0 0 0-10-8" fill="none" stroke-linecap="round"/></g></symbol>
+    <symbol id="i-switch" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 32h7M37 32h7"/><circle cx="13" cy="32" r="3" fill="currentColor"/><circle cx="35" cy="32" r="3" fill="currentColor"/><path d="M15 30 33 16"/><path d="M24 8v6M20 10l4-4 4 4"/></g></symbol>
+    <symbol id="i-battery" viewBox="0 0 48 48"><g stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="5" y="14" width="33" height="20" rx="3" fill="none"/><rect x="38" y="19" width="5" height="10" rx="1" fill="currentColor"/><path d="M23 17l-6 9h6l-3 7 9-10h-6l3-6Z" fill="currentColor" stroke-width="1"/></g></symbol>
+    <symbol id="i-frame" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M13 13l22 22M35 13 13 35" stroke-width="3.4" stroke-linecap="round"/><circle cx="11" cy="11" r="7"/><circle cx="37" cy="11" r="7"/><circle cx="11" cy="37" r="7"/><circle cx="37" cy="37" r="7"/><rect x="19" y="19" width="10" height="10" rx="2" fill="currentColor" fill-opacity=".25"/></g></symbol>
+    <symbol id="i-solder" viewBox="0 0 48 48"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 40 24 24" fill="none"/><path d="M24 24l6-6 10 10-6 6Z" fill="currentColor"/><path d="M9 20c-3-3 3-5 0-8M16 14c-3-3 3-5 0-8" fill="none"/></g></symbol>
+    <symbol id="i-fire" viewBox="0 0 48 48"><path d="M24 4c6 10 15 14 11 27-3 9-19 10-22 1-3-8 3-12 5-18 2 5 5 7 7 8 1-6-3-11-1-18Z" fill="currentColor" fill-opacity=".25" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-blade" viewBox="0 0 48 48"><g stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M24 24C18 10 8 8 7 13s7 10 17 11c6 14 16 16 17 11s-7-10-17-11Z" fill="currentColor" fill-opacity=".2"/><circle cx="24" cy="24" r="3.5" fill="currentColor"/><path d="M38 6l4 4M34 4l2 2M44 14l-2-2" fill="none" stroke-linecap="round"/></g></symbol>
+    <symbol id="i-adult" viewBox="0 0 48 48"><g fill="currentColor"><circle cx="17" cy="11" r="6"/><path d="M7 44V28a10 10 0 0 1 20 0v16Z"/><circle cx="35" cy="21" r="4.5"/><path d="M28 44V34a7 7 0 0 1 14 0v10Z" fill-opacity=".6"/></g></symbol>
+    <symbol id="i-check" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="19" stroke-width="2.4"/><path d="M15 25l6 6 12-13"/></g></symbol>
+    <symbol id="i-warn" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><path d="M24 5 44 41H4Z" fill="currentColor" fill-opacity=".15"/><path d="M24 18v11"/><circle cx="24" cy="35" r="1.6" fill="currentColor"/></g></symbol>
+    <symbol id="i-hand" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 26V10a3 3 0 0 1 6 0v12M22 20V7a3 3 0 0 1 6 0v13M28 20V9a3 3 0 0 1 6 0v15M34 22v-6a3 3 0 0 1 6 0v12c0 9-6 16-15 16-6 0-9-3-12-8l-6-9a3 3 0 0 1 5-3l4 5"/></g></symbol>
+    <symbol id="i-laptop" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="9" y="9" width="30" height="21" rx="2"/><path d="M3 35h42l-3 5H6Z" fill="currentColor" fill-opacity=".2"/><path d="M15 18l4 3-4 3M22 24h6" stroke-linecap="round"/></g></symbol>
+    <symbol id="i-usb" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="4" width="16" height="14" rx="2"/><path d="M20 9h2M26 9h2"/><path d="M18 18h12v8H18Z" fill="currentColor"/><path d="M24 26v8c0 5-6 5-6 10"/></g></symbol>
+    <symbol id="i-phone" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><rect x="13" y="3" width="22" height="42" rx="5"/><path d="M21 39h6" stroke-linecap="round"/><circle cx="19" cy="24" r="4" fill="currentColor" fill-opacity=".3"/><circle cx="29" cy="18" r="4" fill="currentColor" fill-opacity=".3"/></g></symbol>
+    <symbol id="i-wifi" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 19a26 26 0 0 1 36 0M12 26a17 17 0 0 1 24 0M18 33a8 8 0 0 1 12 0"/><circle cx="24" cy="39" r="2.5" fill="currentColor"/></g></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M14 14h20c6 0 9 5 10 12 1 6 0 10-3 10-4 0-5-6-9-6H16c-4 0-5 6-9 6-3 0-4-4-3-10 1-7 4-12 10-12Z"/><path d="M15 20v8M11 24h8" stroke-linecap="round"/><circle cx="31" cy="21" r="1.8" fill="currentColor"/><circle cx="35" cy="25" r="1.8" fill="currentColor"/></g></symbol>
+    <symbol id="i-download" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6v24M15 21l9 9 9-9"/><path d="M8 32v8h32v-8"/></g></symbol>
+    <symbol id="i-gear" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="24" cy="24" r="7"/><path d="M24 4v7M24 37v7M4 24h7M37 24h7M10 10l5 5M33 33l5 5M10 38l5-5M33 15l5-5"/></g></symbol>
+    <symbol id="i-flash" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="8" y="16" width="32" height="24" rx="3"/><path d="M14 16v-4M20 16v-4M26 16v-4M32 16v-4"/><path d="M26 20l-6 9h6l-3 7" stroke-linecap="round"/></g></symbol>
+    <symbol id="i-terminal" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="40" height="32" rx="4"/><path d="M12 18l6 5-6 5M22 30h12"/></g></symbol>
+    <symbol id="i-ball" viewBox="0 0 48 48"><circle cx="24" cy="24" r="15" fill="currentColor"/><path d="M17 17a10 10 0 0 1 8-3" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/></symbol>
+    <symbol id="i-drone" viewBox="0 0 48 48"><g stroke="currentColor" stroke-width="2.4" fill="none"><path d="M12 12l24 24M36 12 12 36" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="10" cy="10" rx="8" ry="2.5" fill="currentColor" fill-opacity=".3"/><ellipse cx="38" cy="10" rx="8" ry="2.5" fill="currentColor" fill-opacity=".3"/><ellipse cx="10" cy="38" rx="8" ry="2.5" fill="currentColor" fill-opacity=".3"/><ellipse cx="38" cy="38" rx="8" ry="2.5" fill="currentColor" fill-opacity=".3"/><rect x="18" y="18" width="12" height="12" rx="3" fill="currentColor"/></g></symbol>
+    <symbol id="i-tether" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M10 12h28M16 12l-4-4M32 12l4-4"/><rect x="18" y="9" width="12" height="6" rx="2" fill="currentColor"/><path d="M14 14c-2 10 4 14 0 30M34 14c2 10-4 14 0 30" stroke-dasharray="3 3"/><path d="M4 44h40"/></g></symbol>
+    <symbol id="i-updown" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4v40M16 12l8-8 8 8M16 36l8 8 8-8"/><path d="M8 24h32" stroke-dasharray="3 4"/></g></symbol>
+    <symbol id="i-room" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M6 20 24 6l18 14v22H6Z"/><path d="M10 42l6-6M18 42l6-6M26 42l6-6M34 42l6-6" stroke-linecap="round" opacity=".6"/><circle cx="24" cy="22" r="4" fill="currentColor"/></g></symbol>
+    <symbol id="i-wire" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 14c10 0 10 20 20 20s10-20 20-20"/><path d="M4 22c10 0 10 20 20 20" opacity=".5"/></g></symbol>
+    <symbol id="i-led" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M16 30V18a8 8 0 0 1 16 0v12Z" fill="currentColor" fill-opacity=".35"/><path d="M12 30h24M20 30v12M28 30v8"/><path d="M8 10l4 3M40 10l-4 3M24 2v4"/></g></symbol>
+    <symbol id="i-hold" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="24" cy="24" r="16" stroke-dasharray="4 4"/><path d="M24 4v8M24 36v8M4 24h8M36 24h8"/><circle cx="24" cy="24" r="5" fill="currentColor"/></g></symbol>
+    <symbol id="i-star" viewBox="0 0 48 48"><path d="M24 4l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 19l14-2Z" fill="currentColor" fill-opacity=".25" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M6 40h36l-4-16H10Z" fill="currentColor" fill-opacity=".15"/><circle cx="24" cy="32" r="4"/><path d="M24 32l3-3"/><path d="M14 24v-8h20v8"/></g></symbol>
+    <symbol id="i-list" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 12h24M18 24h24M18 36h24"/><path d="M6 12l3 3 5-6M6 24l3 3 5-6M6 36l3 3 5-6"/></g></symbol>
+    <symbol id="i-cart" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h6l5 24h24l4-16H13"/><circle cx="18" cy="39" r="3" fill="currentColor"/><circle cx="35" cy="39" r="3" fill="currentColor"/></g></symbol>
+    <symbol id="i-sim" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M8 12h32M8 24h32M8 36h32"/><circle cx="18" cy="12" r="4" fill="currentColor"/><circle cx="30" cy="24" r="4" fill="currentColor"/><circle cx="14" cy="36" r="4" fill="currentColor"/></g></symbol>
+    <symbol id="i-info" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="24" cy="24" r="19"/><path d="M24 22v12"/><circle cx="24" cy="15" r="1.8" fill="currentColor"/></g></symbol>
+  </defs>
+</svg>
+
+<header class="top"><div class="wrap">
+  <div class="brand"><h1>Mini Drone ESP32 AI</h1><span class="spec">Tự làm máy bay 4 cánh biết đứng yên trên không và nhìn bằng camera</span></div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="bom" title="Chuẩn bị đồ"><svg class="ic"><use href="#i-cart"/></svg><span class="t">Chuẩn bị đồ</span></button>
+    <button role="tab" data-t="wiring" title="Nối dây"><svg class="ic"><use href="#i-wire"/></svg><span class="t">Nối dây</span></button>
+    <button role="tab" data-t="assembly" title="Lắp ráp"><svg class="ic"><use href="#i-drone"/></svg><span class="t">Lắp ráp</span></button>
+    <button role="tab" data-t="firmware" title="Cài phần mềm"><svg class="ic"><use href="#i-flash"/></svg><span class="t">Cài phần mềm</span></button>
+    <button role="tab" data-t="ai" title="Dạy máy nhìn"><svg class="ic"><use href="#i-camera"/></svg><span class="t">Dạy máy nhìn</span></button>
+    <button role="tab" data-t="fly" title="Kết nối và bay"><svg class="ic"><use href="#i-wifi"/></svg><span class="t">Kết nối và bay</span></button>
+    <button role="tab" data-t="sim" title="Thử động cơ"><svg class="ic"><use href="#i-sim"/></svg><span class="t">Thử động cơ</span></button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<section class="tab" id="t-bom">
+  <h2>Chuẩn bị đồ</h2>
+  <p class="lead">Máy bay giống một chú chim robot: có não, có cảm giác thăng bằng, có mắt và có cánh.</p>
+  <div class="danger">
+    <div><svg class="ic"><use href="#i-solder"/></svg><span><b>Mỏ hàn rất nóng</b>khoảng 300 °C</span></div>
+    <div><svg class="ic"><use href="#i-fire"/></svg><span><b>Pin có thể cháy</b>nếu thủng hoặc sạc sai</span></div>
+    <div><svg class="ic"><use href="#i-blade"/></svg><span><b>Cánh quạt sắc</b>quay rất nhanh</span></div>
+    <div><svg class="ic"><use href="#i-adult"/></svg><span><b>Luôn có người lớn</b>và đeo kính bảo hộ</span></div>
+  </div>
+
+  <h3><svg class="ic"><use href="#i-drone"/></svg>Các bộ phận</h3>
+  <div class="grid g3">
+    <div class="tile"><div class="pic" style="color:var(--board)"><svg class="ic"><use href="#i-brain"/></svg></div><b>Bộ não</b><small>ESP32 DevKit</small><span>Tính toán để giữ thăng bằng, phát Wi-Fi.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-i2c0)"><svg class="ic"><use href="#i-balance"/></svg></div><b>Cảm giác thăng bằng</b><small>MPU6050</small><span>Biết máy đang nghiêng về đâu.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-spi)"><svg class="ic"><use href="#i-eyedown"/></svg></div><b>Mắt nhìn sàn</b><small>PMW3901</small><span>Nhìn sàn để đứng yên một chỗ.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-i2c1)"><svg class="ic"><use href="#i-ruler"/></svg></div><b>Thước đo độ cao</b><small>VL53L1X</small><span>Tia sáng đo khoảng cách xuống sàn.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-uart)"><svg class="ic"><use href="#i-camera"/></svg></div><b>Mắt thông minh</b><small>XIAO ESP32-S3 Sense</small><span>Camera tìm đồ vật, chỉ đường cho não.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-mot)"><svg class="ic"><use href="#i-motor"/></svg></div><b>Động cơ + cánh</b><small>8520 + cánh 55 mm</small><span>Thổi gió xuống để bay lên.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-mot)"><svg class="ic"><use href="#i-switch"/></svg></div><b>Công tắc điện tử</b><small>MOSFET AO3400</small><span>Bật tắt thật nhanh cho động cơ.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--n-vbat)"><svg class="ic"><use href="#i-battery"/></svg></div><b>Pin + bộ đổi điện</b><small>LiPo 1S + 3,3 V</small><span>Cấp điện đều cho não và cảm biến.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--frame)"><svg class="ic"><use href="#i-frame"/></svg></div><b>Khung</b><small>90 mm</small><span>Bộ xương có vòng bảo vệ cánh.</span></div>
+  </div>
+
+  <h3><svg class="ic"><use href="#i-cart"/></svg>Danh sách mua</h3>
+  <div class="note"><svg class="ic"><use href="#i-warn"/></svg><span><b>Đừng quên 3 món:</b> bộ đổi điện 3,3 V, 4 diode SS14, 1 tụ điện lớn.</span></div>
+  <div class="tbl"><table id="bomTable">
+    <thead><tr><th></th><th>#</th><th>Món đồ</th><th class="num">Số lượng</th><th class="num">Giá (nghìn đồng)</th><th>Dùng để</th><th>Ghi chú</th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td></td><td></td><td><b>Tổng cộng khoảng</b></td><td></td><td class="num" id="bomTotal"></td><td id="bomBought"></td><td></td></tr></tfoot>
+  </table></div>
+  <details>
+    <summary><svg class="ic"><use href="#i-adult"/></svg>Linh kiện nhỏ cho mạch động cơ (người lớn mua)</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Linh kiện</th><th class="num">Số lượng</th><th>Dùng để</th></tr></thead>
+      <tbody>
+        <tr><td>Điện trở 100 Ω</td><td class="num">4</td><td>Nối bộ não với MOSFET</td></tr>
+        <tr><td>Điện trở 10 kΩ</td><td class="num">4</td><td>Giữ động cơ đứng yên lúc bật máy</td></tr>
+        <tr><td>Điện trở 100 kΩ</td><td class="num">2</td><td>Đo pin</td></tr>
+        <tr><td>Điện trở 330 Ω + 3 đèn LED</td><td class="num">3</td><td>Đèn báo</td></tr>
+        <tr><td>Tụ 470–1000 µF 6,3 V + tụ 100 nF</td><td class="num">1 + 3</td><td>Dự trữ điện khi động cơ tăng tốc</td></tr>
+        <tr><td>Dây silicon 26 AWG và 30 AWG</td><td class="num">—</td><td>Dây to cho động cơ, dây nhỏ cho cảm biến</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+
+  <h3><svg class="ic"><use href="#i-scale"/></svg>Máy bay có nặng quá không?</h3>
+  <p>Cân từng món rồi sửa số. Thanh xanh (lực đẩy) phải dài gấp rưỡi thanh đỏ (cân nặng).</p>
+  <div class="card">
+    <div class="calc" id="calc"></div>
+    <div class="scale" id="scaleBars"></div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</section>
+
+<section class="tab" id="t-wiring" hidden>
+  <h2>Nối dây</h2>
+  <p class="lead">Mỗi màu dây chở một loại tin nhắn. Bấm vào một khối hoặc một nút màu để xem dây của nó.</p>
+  <div class="legend" id="legend"></div>
+  <p class="swipe">← Vuốt ngang để xem hết hình →</p>
+  <div class="svgbox"><svg id="wsvg" viewBox="0 118 1000 574" role="img" aria-label="Sơ đồ nối dây từ bộ não ESP32 tới các bộ phận"></svg></div>
+  <details>
+    <summary><svg class="ic"><use href="#i-list"/></svg>Bảng chân chi tiết (người lớn)</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Chân bộ não</th><th>Nối tới</th><th>Để làm gì</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">21 / 22</td><td>MPU6050 SDA / SCL</td><td>Cảm giác thăng bằng</td></tr>
+        <tr><td class="mono">19</td><td>MPU6050 INT</td><td>Báo có số mới</td></tr>
+        <tr><td class="mono">16 / 17</td><td>VL53L1X SDA / SCL</td><td>Đo độ cao (bus I2C1 riêng)</td></tr>
+        <tr><td class="mono">14 / 12 / 13 / 15</td><td>PMW3901 SCLK / MISO / MOSI / NCS</td><td>Mắt nhìn sàn</td></tr>
+        <tr><td class="mono">4 / 33 / 32 / 25</td><td>Động cơ M1 / M2 / M3 / M4</td><td>Qua MOSFET</td></tr>
+        <tr><td class="mono">26 / 27</td><td>XIAO D6 / D7</td><td>UART2, phải tắt còi (buzzer)</td></tr>
+        <tr><td class="mono">35</td><td>Giữa 2 điện trở 100 kΩ</td><td>Đo pin (firmware nhân 2)</td></tr>
+        <tr><td class="mono">23 / 5 / 18</td><td>LED đỏ / xanh lá / xanh dương</td><td>Qua 330 Ω xuống GND</td></tr>
+        <tr><td class="mono">3V3</td><td>Bộ đổi điện 3,3 V</td><td>Nguồn cho bộ não</td></tr>
+        <tr><td class="mono">VIN</td><td><b>Không nối</b></td><td>Cần điện cao hơn pin 1S</td></tr>
+      </tbody>
+    </table></div>
+    <p>Các chân trùng mặc định của target <code>esplane with esp32</code> trong ESP-Drone. <b>GPIO12</b> là chân strapping: nếu gặp <code>flash read err, 1000</code>, rút dây MISO khi bật để xác nhận. Cách sửa <code>espefuse.py --port COM5 set_flash_voltage 3.3V</code> ghi efuse <b>vĩnh viễn</b>, chỉ dùng cho WROOM-32 flash 3,3 V.</p>
+  </details>
+
+  <h3><svg class="ic"><use href="#i-battery"/></svg>Điện đi từ pin tới đâu?</h3>
+  <p class="swipe">← Vuốt ngang để xem hết hình →</p>
+  <div class="svgbox"><svg viewBox="0 0 980 300" id="psvg" role="img" aria-label="Đường điện từ pin tới các bộ phận"></svg></div>
+  <div class="note"><svg class="ic"><use href="#i-info"/></svg><span>Mọi dây <b>GND</b> nối chung một chỗ, giống mọi người cùng đứng trên một mặt đất.</span></div>
+
+  <h3><svg class="ic"><use href="#i-switch"/></svg>Mạch cho 1 động cơ (làm 4 cái)</h3>
+  <div class="grid g2">
+    <div class="svgbox small"><svg viewBox="0 0 520 300" id="dsvg" role="img" aria-label="Mạch điều khiển một động cơ"></svg></div>
+    <div class="grid" style="align-content:start">
+      <div class="tile"><div class="pic" style="color:var(--n-mot)"><svg class="ic"><use href="#i-switch"/></svg></div><b>AO3400 = công tắc</b><small>chân 1 G · 2 S · 3 D</small><span>Não bật công tắc, động cơ quay.</span></div>
+      <div class="tile"><div class="pic" style="color:var(--ink)"><svg class="ic"><use href="#i-updown"/></svg></div><b>SS14 = van một chiều</b><small>vạch trắng → dây đỏ pin</small><span>Bảo vệ công tắc khỏi điện ngược.</span></div>
+      <div class="tile"><div class="pic" style="color:var(--n-i2c0)"><svg class="ic"><use href="#i-hand"/></svg></div><b>10 kΩ = tay giữ</b><small>gate → GND</small><span>Giữ động cơ đứng yên lúc bật máy.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="t-assembly" hidden>
+  <h2>Lắp ráp từng bước</h2>
+  <p class="lead">Nhìn từ trên xuống, mũi máy ở trên. Nét đứt là đồ ở mặt dưới.</p>
+  <div class="asm">
+    <div class="card stepcard">
+      <div class="ctrl">
+        <button class="btn ghost" id="prevS">← Trước</button>
+        <button class="btn" id="nextS">Tiếp →</button>
+        <div class="prog"><i id="progS"></i></div>
+        <span class="mono" id="cntS"></span>
+      </div>
+      <div id="stepBody"></div>
+      <div class="steplist" id="stepList"></div>
+    </div>
+    <div class="stage"><svg id="asvg" viewBox="0 0 600 580" role="img" aria-label="Mô phỏng lắp ráp nhìn từ trên xuống"></svg></div>
+  </div>
+</section>
+
+<section class="tab" id="t-firmware" hidden>
+  <h2>Cài phần mềm bay</h2>
+  <p class="lead">Chép chương trình <b>ESP-Drone</b> vào bộ não. <span class="adult"><svg class="ic"><use href="#i-adult"/></svg>CẦN NGƯỜI LỚN</span></p>
+  <div class="flow">
+    <div class="st"><svg class="ic"><use href="#i-usb"/></svg>Cắm USB</div><span class="ar">→</span>
+    <div class="st"><svg class="ic"><use href="#i-download"/></svg>Tải công cụ</div><span class="ar">→</span>
+    <div class="st"><svg class="ic"><use href="#i-terminal"/></svg>Tải ESP-Drone</div><span class="ar">→</span>
+    <div class="st"><svg class="ic"><use href="#i-gear"/></svg>Chỉnh menu</div><span class="ar">→</span>
+    <div class="st"><svg class="ic"><use href="#i-flash"/></svg>Nạp</div><span class="ar">→</span>
+    <div class="st"><svg class="ic" style="color:var(--ok)"><use href="#i-check"/></svg>3 chữ OK</div>
+  </div>
+  <ol class="isteps">
+    <li><div class="n"><i>1</i><svg class="ic"><use href="#i-usb"/></svg></div><div><b>Cắm bộ não vào máy tính</b><p>Cáp USB có truyền dữ liệu. Xem tên cổng trong <i>Device Manager → Ports</i>, ví dụ <code>COM5</code>.</p></div></li>
+    <li><div class="n"><i>2</i><svg class="ic"><use href="#i-download"/></svg></div><div><b>Cài ESP-IDF 5.0</b><p>Dễ nhất: tải <i>ESP-IDF Tools Installer</i>, chọn v5.0.x, mở <i>ESP-IDF 5.0 PowerShell</i>. Hoặc gõ:</p><pre class="code" data-src="c-idf"></pre></div></li>
+    <li><div class="n"><i>3</i><svg class="ic"><use href="#i-terminal"/></svg></div><div><b>Tải ESP-Drone</b><pre class="code" data-src="c-clone"></pre></div></li>
+    <li><div class="n"><i>4</i><svg class="ic"><use href="#i-gear"/></svg></div><div><b>Chỉnh menu giống hình</b><p>Mũi tên để đi, Space để bật/tắt, <b>S</b> lưu, <b>Q</b> thoát.</p>
+      <div class="term" role="img" aria-label="Màn hình menuconfig với các lựa chọn cần chỉnh">
+        <div class="t">ESPDrone Config</div>
+        <div class="row sel">ESP_Drone hardware version: esplane with esp32 onboard<em>loại bộ não</em></div>
+        <div class="row sel">motors config → motor type: brushed 720<em>động cơ</em></div>
+        <div class="row sel">buzzer → [ ] enable buzzer to play sound<em>tắt còi</em></div>
+        <div class="row sel">app set → [*] Enable position hold mode<em>đứng yên</em></div>
+        <div class="row sel">wireless config → Wi-Fi Password: ********<em>mật khẩu mới</em></div>
+        <div class="row">sensors config / motors pins / led config<em style="background:#6c7a90;color:#fff">giữ nguyên</em></div>
+      </div></div></li>
+    <li><div class="n"><i>5</i><svg class="ic"><use href="#i-flash"/></svg></div><div><b>Nạp</b><p><b>Rút pin</b>, chỉ cắm USB. Báo <code>Failed to connect</code> thì giữ BOOT, bấm EN, thả BOOT.</p><pre class="code" data-src="c-build"></pre></div></li>
+    <li><div class="n"><i>6</i><svg class="ic" style="color:var(--ok)"><use href="#i-check"/></svg></div><div><b>Tìm 3 chữ OK</b><p>Thoát bằng <code>Ctrl + ]</code>. Ví dụ:</p>
+      <div class="term" role="img" aria-label="Ví dụ màn hình khởi động có ba cảm biến báo OK">
+        <div>… MPU6050 … <span class="okk">[OK]</span> <span class="cm">← cảm giác thăng bằng</span></div>
+        <div>… VL53L1X … <span class="okk">[OK]</span> <span class="cm">← thước đo độ cao</span></div>
+        <div>PMW3901 SPI connection <span class="okk">[OK].</span> <span class="cm">← mắt nhìn sàn</span></div>
+      </div></div></li>
+  </ol>
+  <details>
+    <summary><svg class="ic"><use href="#i-warn"/></svg>Thấy chữ báo lỗi? (bảng tra)</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Máy báo</th><th>Nghĩa là</th><th>Cách sửa</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Brownout detector was triggered</td><td>Thiếu điện</td><td>Kiểm bộ đổi điện 3,3 V, dây nguồn, tụ 470 µF</td></tr>
+        <tr><td class="mono">MPU6050 ... [FAIL]</td><td>Không thấy cảm giác thăng bằng</td><td>Dây 21, 22, 3V3; AD0 nối GND</td></tr>
+        <tr><td class="mono">PMW3901 SPI connection [FAIL].</td><td>Không thấy mắt nhìn sàn</td><td>Dây 12, 13, 14, 15 và 3V3</td></tr>
+        <tr><td class="mono">VL53L1X ... [FAIL]</td><td>Không thấy thước đo</td><td>Phải nối chân 16, 17</td></tr>
+        <tr><td class="mono">flash read err, 1000</td><td>Chân 12 làm khởi động sai</td><td>Xem mục GPIO12 ở tab Nối dây</td></tr>
+        <tr><td>Động cơ giật khi bật</td><td>Thiếu điện trở 10 kΩ</td><td>Thêm 10 kΩ cho từng động cơ</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+  <details>
+    <summary><svg class="ic"><use href="#i-laptop"/></svg>Cài cfclient để xem số đo và chỉnh bay (không bắt buộc)</summary>
+    <p>Cần Python 3.</p>
+    <pre class="code" data-src="c-cfclient"></pre>
+  </details>
+</section>
+
+<section class="tab" id="t-ai" hidden>
+  <h2>Dạy máy nhìn</h2>
+  <p class="lead">Camera thấy đồ vật → nhắn cho bộ não → bộ não lái động cơ. Camera lỗi thì bộ não vẫn tự giữ thăng bằng.</p>
+  <p class="swipe">← Vuốt ngang để xem hết hình →</p>
+  <div class="svgbox"><svg id="flowsvg" viewBox="0 0 900 240" role="img" aria-label="Đường đi của tin nhắn từ camera tới động cơ"></svg></div>
+
+  <h3><svg class="ic"><use href="#i-wire"/></svg>Một tin nhắn gồm 13 ô</h3>
+  <div class="frame" id="frameStrip"></div>
+  <div class="note ok"><svg class="ic"><use href="#i-check"/></svg><span><b>Luật an toàn:</b> tối đa 30 cm/giây, cao tối đa 1 m. Chỉ làm theo khi bật <code>aiuart.enable = 1</code>. Camera im lặng nửa giây thì bộ não quay về nghe tay cầm.</span></div>
+
+  <h3><svg class="ic"><use href="#i-ball"/></svg>Trò chơi: đuổi theo quả bóng đỏ</h3>
+  <div class="game" id="ballGame"></div>
+
+  <h3><svg class="ic"><use href="#i-list"/></svg>Các bước</h3>
+  <ol class="isteps">
+    <li><div class="n"><i>A</i><svg class="ic"><use href="#i-brain"/></svg></div><div><b>Dạy bộ não nghe tin nhắn</b> <span class="adult"><svg class="ic"><use href="#i-adult"/></svg>CẦN NGƯỜI LỚN</span><p>Thêm 1 tệp vào ESP-Drone, sửa 2 tệp, rồi nạp lại.</p>
+      <details><summary><svg class="ic"><use href="#i-terminal"/></svg>Xem code và cách thêm</summary>
+        <p>1. Tạo <code>components/core/crazyflie/modules/src/ai_uart.c</code>:</p>
+        <pre class="code" data-src="c-aiuart"></pre>
+        <p>2. Tạo <code>components/core/crazyflie/modules/interface/ai_uart.h</code>:</p>
+        <pre class="code" data-src="c-aiuart-h"></pre>
+        <p>3. <code>components/core/crazyflie/CMakeLists.txt</code>: thêm <code>"./modules/src/ai_uart.c"</code> vào <code>SRCS</code> cạnh <code>"./modules/src/commander.c"</code>; thêm <code>driver</code> vào <code>REQUIRES</code>.</p>
+        <p>4. <code>components/core/crazyflie/modules/src/system.c</code>: thêm <code>#include "ai_uart.h"</code> ở đầu và <code>aiUartInit();</code> ngay dưới <code>commanderInit();</code>.</p>
+        <p>5. Tắt còi trong menuconfig, nạp lại.</p>
+      </details></div></li>
+    <li><div class="n"><i>B</i><svg class="ic"><use href="#i-laptop"/></svg></div><div><b>Cài Arduino IDE cho XIAO</b>
+      <div class="flow" style="margin:6px 0 0">
+        <div class="st"><svg class="ic"><use href="#i-download"/></svg>Arduino IDE 2</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-gear"/></svg>Cài "esp32"</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-brain"/></svg>XIAO_ESP32S3</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-camera"/></svg>PSRAM: OPI</div>
+      </div>
+      <details><summary><svg class="ic"><use href="#i-info"/></svg>Địa chỉ dán vào Preferences</summary><p><code>https://espressif.github.io/arduino-esp32/package_esp32_index.json</code></p><p>Máy không nhận XIAO: giữ nút <b>B</b>, cắm cáp, thả nút.</p></details></div></li>
+    <li><div class="n"><i>C</i><svg class="ic" style="color:var(--bad)"><use href="#i-ball"/></svg></div><div><b>Nạp trò đuổi bóng đỏ</b><p>Chép code, bấm Upload. Muốn đứng xa hay gần hơn thì đổi số <code>TARGET_AREA</code>.</p>
+      <details><summary><svg class="ic"><use href="#i-terminal"/></svg>Xem code cho XIAO</summary><pre class="code" data-src="c-xiao"></pre></details></div></li>
+    <li><div class="n"><i>D</i><svg class="ic"><use href="#i-star"/></svg></div><div><b>Dạy nhận đồ vật (Edge Impulse)</b>
+      <div class="flow" style="margin:6px 0 0">
+        <div class="st"><svg class="ic"><use href="#i-camera"/></svg>Chụp 200 ảnh</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-hand"/></svg>Vẽ khung</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-gear"/></svg>Train FOMO</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-download"/></svg>Tải thư viện</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-flash"/></svg>Nạp XIAO</div>
+      </div>
+      <details><summary><svg class="ic"><use href="#i-list"/></svg>Chi tiết (người lớn)</summary>
+        <p>1. Nạp <i>Examples → ESP32 → Camera → CameraWebServer</i> (model <code>CAMERA_MODEL_XIAO_ESP32S3</code>), chụp 150–300 ảnh nhiều góc, nhiều ánh sáng.</p>
+        <p>2. edgeimpulse.com: tải ảnh, vẽ khung quanh đồ vật.</p>
+        <p>3. Impulse: ảnh 96×96, Grayscale, <b>Object Detection → FOMO (MobileNetV2 0.35)</b>. Train 60 epoch, F1 &gt; 0,8.</p>
+        <p>4. Deployment → Arduino library → Sketch → Include Library → Add .ZIP.</p>
+        <p>5. Mở ví dụ <i>esp32 → esp32_camera</i>, dùng hàm <code>initCamera()</code> ở bước C, thay phần in kết quả bằng:</p>
+        <pre class="code" data-src="c-ei"></pre>
+        <p>FOMO chỉ biết vị trí, không biết kích thước, nên máy chỉ xoay theo đồ vật.</p>
+      </details></div></li>
+    <li><div class="n"><i>E</i><svg class="ic"><use href="#i-tether"/></svg></div><div><b>Thử an toàn</b>
+      <div class="flow" style="margin:6px 0 0">
+        <div class="st"><svg class="ic" style="color:var(--bad)"><use href="#i-blade"/></svg>Tháo cánh, xem số</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-tether"/></svg>Lắp cánh, buộc dây</div><span class="ar">→</span>
+        <div class="st"><svg class="ic" style="color:var(--ok)"><use href="#i-check"/></svg>enable = 1</div><span class="ar">→</span>
+        <div class="st"><svg class="ic"><use href="#i-gamepad"/></svg>enable = 0: lấy lại</div>
+      </div>
+      <details><summary><svg class="ic"><use href="#i-list"/></svg>Chi tiết (người lớn)</summary>
+        <p>1. Tháo cánh, cfclient → Log, thêm nhóm <code>aiuart</code>. Di chuyển bóng, xem số đổi; <code>bad</code> gần 0.</p>
+        <p>2. Bóng bên phải thì <code>aiuart.yaw</code> phải âm. Ngược lại: đổi dấu <code>ex</code> trong code XIAO.</p>
+        <p>3. Lắp cánh, bay trong lưới hoặc buộc dây, cao 50 cm ở chế độ đứng yên.</p>
+        <p>4. Parameters: <code>aiuart.enable = 1</code>. Lấy lại quyền: <code>aiuart.enable = 0</code>.</p>
+      </details></div></li>
+  </ol>
+</section>
+
+<section class="tab" id="t-fly" hidden>
+  <h2>Kết nối và bay</h2>
+  <p class="lead">Không có tay khiển radio nên không có bước "bind". Máy bay tự phát Wi-Fi; kết nối vào là lái được.</p>
+  <p class="swipe">← Vuốt ngang để xem hết hình →</p>
+  <div class="svgbox"><svg id="connsvg" viewBox="0 0 900 240" role="img" aria-label="Điện thoại hoặc máy tính kết nối Wi-Fi với máy bay"></svg></div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <ol class="isteps">
+      <li><div class="n"><i>1</i><svg class="ic"><use href="#i-hand"/></svg></div><div><b>Đặt phẳng, cắm pin</b><p>Không chạm máy trong 3 giây.</p></div></li>
+      <li><div class="n"><i>2</i><svg class="ic"><use href="#i-wifi"/></svg></div><div><b>Vào Wi-Fi <code>ESP-DRONE_XXXX</code></b><p>Mật khẩu bạn đã đặt (mặc định <code>12345678</code>).</p></div></li>
+      <li><div class="n"><i>3</i><svg class="ic"><use href="#i-phone"/></svg></div><div><b>Mở app ESP-Drone → Connect</b><p>Hoặc cfclient → Scan → Connect.</p></div></li>
+      <li><div class="n"><i>4</i><svg class="ic" style="color:var(--ok)"><use href="#i-led"/></svg></div><div><b>Đèn xanh lá nháy nhanh</b><p>Đã kết nối. Đèn đỏ nháy: pin yếu, hạ cánh ngay.</p></div></li>
+    </ol>
+    <div class="card">
+      <svg viewBox="0 0 360 200" style="width:100%;height:auto;display:block" role="img" aria-label="Hai cần điều khiển trên màn hình điện thoại">
+        <rect x="4" y="4" width="352" height="192" rx="24" fill="var(--soft)" stroke="var(--line)" stroke-width="2"/>
+        <circle cx="90" cy="100" r="46" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/><circle cx="90" cy="100" r="16" fill="var(--accent)"/>
+        <circle cx="270" cy="100" r="46" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/><circle cx="270" cy="100" r="16" fill="var(--n-i2c0)"/>
+        <g font-size="14" font-weight="700" text-anchor="middle">
+          <text x="90" y="42">lên</text><text x="90" y="172">xuống</text><text x="28" y="105">↺</text><text x="152" y="105">↻</text>
+          <text x="270" y="42">tiến</text><text x="270" y="172">lùi</text><text x="200" y="105">trái</text><text x="336" y="105">phải</text>
+        </g>
+      </svg>
+      <p style="margin:8px 0 0;font-size:15px">Cần trái: lên xuống, xoay. Cần phải: tiến lùi, trái phải. Lần đầu chỉnh <i>max thrust</i> xuống 70 %.</p>
+    </div>
+  </div>
+  <details>
+    <summary><svg class="ic"><use href="#i-info"/></svg>Muốn dùng tay khiển radio? (người lớn)</summary>
+    <p>Mã nguồn có <code>extrx.c</code> cho bộ thu PPM nhưng không được khởi tạo và thiếu driver CPPM cho ESP32. Muốn dùng ELRS/FlySky thì phải tự viết module đọc CRSF hoặc SBUS qua UART1, giống <code>ai_uart.c</code>. Máy bay có IP <code>192.168.43.42</code>, cổng UDP 2390.</p>
+  </details>
+
+  <h3><svg class="ic"><use href="#i-list"/></svg>Kiểm tra trước khi bay</h3>
+  <div class="card"><ul class="check" id="preflight"></ul>
+    <div class="ctrl"><button class="btn ghost" id="resetPre">Bỏ chọn hết</button><span id="preCount"></span></div>
+  </div>
+
+  <h3><svg class="ic"><use href="#i-star"/></svg>Tập bay qua 6 màn</h3>
+  <p>Qua màn này mới sang màn sau. Sàn có hoa văn, đủ sáng.</p>
+  <div class="levels">
+    <div class="lvl"><svg class="ic"><use href="#i-hand"/></svg><i>MÀN 1</i><b>Chưa lắp cánh</b><span>Nghiêng phải → M1, M2 quay nhanh hơn</span></div>
+    <div class="lvl"><svg class="ic"><use href="#i-blade"/></svg><i>MÀN 2</i><b>Lắp cánh</b><span>Ga 15 %: gió thổi xuống</span></div>
+    <div class="lvl"><svg class="ic"><use href="#i-tether"/></svg><i>MÀN 3</i><b>Giữ thăng bằng</b><span>Buộc dây, bay 10 cm</span><code>poshold=0 althold=0</code></div>
+    <div class="lvl"><svg class="ic"><use href="#i-updown"/></svg><i>MÀN 4</i><b>Giữ độ cao</b><span>Ga ở giữa: đứng yên một độ cao</span><code>althold=1</code></div>
+    <div class="lvl"><svg class="ic"><use href="#i-hold"/></svg><i>MÀN 5</i><b>Đứng yên</b><span>Đẩy nhẹ: tự quay về chỗ cũ</span><code>poshold=1</code></div>
+    <div class="lvl"><svg class="ic"><use href="#i-camera"/></svg><i>MÀN 6</i><b>Cho AI lái</b><span>Bước E ở tab Dạy máy nhìn</span></div>
+  </div>
+  <details>
+    <summary><svg class="ic"><use href="#i-gear"/></svg>Máy bay bay chưa đẹp? Chỉnh số (người lớn)</summary>
+    <p>cfclient → Parameters, mỗi lần một số. Tên đầy đủ: <code>flightmode.poshold</code>, <code>flightmode.althold</code>. Xem <code>range.zrange</code> (độ cao, mm) và <code>motion.squal</code> (&gt; 30 là sàn đủ vân).</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Máy bay bị</th><th>Chỉnh số</th><th>Chỉnh thế nào</th></tr></thead>
+      <tbody>
+        <tr><td>Vọt lên hoặc tụt xuống khi giữ độ cao</td><td class="mono">posCtlPid.thrustBase</td><td>Vọt thì giảm, tụt thì tăng, bước 1000</td></tr>
+        <tr><td>Rung nhanh, kêu rè</td><td class="mono">pid_rate.roll_kp / pitch_kp</td><td>Giảm khoảng 1/10</td></tr>
+        <tr><td>Lắc qua lại chậm</td><td class="mono">pid_attitude.roll_kp / pitch_kp</td><td>Giảm; mềm và trôi thì tăng</td></tr>
+        <tr><td>Tự xoay vòng</td><td class="mono">pid_rate.yaw_kp</td><td>Tăng dần; kiểm chiều quay</td></tr>
+        <tr><td>Luôn trôi một phía</td><td>menuconfig → calibration angle</td><td>Nhập độ lệch</td></tr>
+        <tr><td>Đứng yên nhưng trôi dần</td><td class="mono">motion.squal</td><td>Sàn nhiều vân, thêm đèn, lau mắt nhìn sàn</td></tr>
+      </tbody>
+    </table></div>
+    <p>Số chỉnh trong cfclient mất khi tắt máy; tìm được số tốt thì sửa trong mã nguồn và nạp lại.</p>
+  </details>
+</section>
+
+<section class="tab" id="t-sim" hidden>
+  <h2>Thử động cơ</h2>
+  <p class="lead">Động cơ nào quay nhanh hơn, máy sẽ nghiêng hoặc xoay theo. Kéo thanh trượt để xem.</p>
+  <div class="grid g2">
+    <div class="card">
+      <div class="sliders">
+        <div class="sl"><label for="sT">↕ Ga: lên / xuống <span id="vT"></span></label><input type="range" id="sT" min="0" max="60000" step="500" value="30000"></div>
+        <div class="sl"><label for="sR">↔ Nghiêng trái / phải <span id="vR"></span></label><input type="range" id="sR" min="-20000" max="20000" step="500" value="0"></div>
+        <div class="sl"><label for="sP">⇅ Chúi mũi / ngóc mũi <span id="vP"></span></label><input type="range" id="sP" min="-20000" max="20000" step="500" value="0"></div>
+        <div class="sl"><label for="sY">↻ Xoay tại chỗ <span id="vY"></span></label><input type="range" id="sY" min="-20000" max="20000" step="500" value="0"></div>
+      </div>
+      <div class="ctrl"><button class="btn ghost" id="simReset">Trả về giữa</button></div>
+      <div class="bars" id="bars"></div>
+      <div class="readout" id="mixOut"></div>
+    </div>
+    <div>
+      <svg id="ssvg" viewBox="0 0 400 400" style="width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px" role="img" aria-label="Mô phỏng tốc độ 4 động cơ"></svg>
+      <details><summary><svg class="ic"><use href="#i-terminal"/></svg>Công thức trong chương trình (người lớn)</summary><pre class="code" data-src="c-mix"></pre></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<script type="text/plain" id="c-idf">mkdir C:\esp
+cd C:\esp
+git clone -b release/v5.0 --recursive https://github.com/espressif/esp-idf.git
+cd esp-idf
+.\install.ps1 esp32
+.\export.ps1          # chạy lại lệnh này mỗi lần mở cửa sổ PowerShell mới</script>
+
+<script type="text/plain" id="c-clone">cd C:\esp
+git clone https://github.com/espressif/esp-drone.git
+cd esp-drone
+idf.py set-target esp32
+idf.py menuconfig</script>
+
+<script type="text/plain" id="c-build">idf.py build
+idf.py -p COM5 flash monitor</script>
+
+<script type="text/plain" id="c-cfclient">git clone https://github.com/qljz1993/crazyflie-clients-python.git
+cd crazyflie-clients-python
+pip3 install -e .
+cfclient</script>
+
+<script type="text/plain" id="c-aiuart-h">#ifndef AI_UART_H_
+#define AI_UART_H_
+
+void aiUartInit(void);
+
+#endif /* AI_UART_H_ */</script>
+
+<script type="text/plain" id="c-aiuart">/*
+ * ai_uart.c - nhận lệnh bay từ bo AI (XIAO ESP32-S3) qua UART2.
+ * Khung 13 byte: A5 5A seq vx vy z yaw flags chk (int16 little-endian).
+ * Chỉ chuyển lệnh vào commander khi tham số aiuart.enable = 1.
+ */
+#include <string.h>
+#include "FreeRTOS.h"
+#include "task.h"
+#include "driver/uart.h"
+#include "commander.h"
+#include "stabilizer_types.h"
+#include "param.h"
+#include "log.h"
+#include "ai_uart.h"
+#define DEBUG_MODULE "AIUART"
+#include "debug_cf.h"
+
+#define AI_UART     UART_NUM_2
+#define AI_TX_PIN   27
+#define AI_RX_PIN   26
+#define AI_BAUD     115200
+#define FRAME_LEN   13
+
+#define VXY_MAX     0.30f   /* m/s   */
+#define YAW_MAX     60.0f   /* deg/s */
+#define Z_MIN       0.20f   /* m     */
+#define Z_MAX       1.00f
+
+static uint8_t enable = 0;  /* 0 = chỉ ghi log, 1 = cho AI điều khiển */
+static float logVx, logVy, logZ, logYaw;
+static uint8_t logTarget;
+static uint16_t badFrames;
+
+static float clampf(float v, float lo, float hi)
+{
+  return v < lo ? lo : (v > hi ? hi : v);
+}
+
+static int16_t rd16(const uint8_t *p)
+{
+  return (int16_t)(p[0] | (p[1] << 8));
+}
+
+static void handleFrame(const uint8_t *f)
+{
+  uint8_t x = 0;
+  for (int i = 2; i < FRAME_LEN - 1; i++) {
+    x ^= f[i];
+  }
+  if (x != f[FRAME_LEN - 1]) {
+    badFrames++;
+    return;
+  }
+
+  logVx     = clampf(rd16(&f[3]) / 1000.0f, -VXY_MAX, VXY_MAX);
+  logVy     = clampf(rd16(&f[5]) / 1000.0f, -VXY_MAX, VXY_MAX);
+  logZ      = clampf(rd16(&f[7]) / 1000.0f, Z_MIN, Z_MAX);
+  logYaw    = clampf(rd16(&f[9]) / 10.0f, -YAW_MAX, YAW_MAX);
+  logTarget = f[11] & 0x01;
+
+  if (!enable) {
+    return;
+  }
+
+  /* Giống gói "hover" của Crazyflie: vận tốc theo thân máy + độ cao tuyệt đối */
+  setpoint_t sp;
+  memset(&sp, 0, sizeof(sp));
+  sp.mode.z = modeAbs;
+  sp.position.z = logZ;
+  sp.mode.x = modeVelocity;
+  sp.mode.y = modeVelocity;
+  sp.velocity.x = logVx;
+  sp.velocity.y = logVy;
+  sp.velocity_body = true;
+  sp.mode.yaw = modeVelocity;
+  sp.attitudeRate.yaw = logYaw;
+  commanderSetSetpoint(&sp, COMMANDER_PRIORITY_EXTRX);
+}
+
+static void aiUartTask(void *arg)
+{
+  uint8_t buf[FRAME_LEN];
+  int have = 0;
+  uint8_t b;
+
+  for (;;) {
+    if (uart_read_bytes(AI_UART, &b, 1, pdMS_TO_TICKS(100)) != 1) {
+      continue;
+    }
+    if (have == 0) {
+      if (b == 0xA5) buf[have++] = b;
+      continue;
+    }
+    if (have == 1) {
+      if (b == 0x5A) buf[have++] = b;
+      else have = (b == 0xA5) ? 1 : 0;
+      continue;
+    }
+    buf[have++] = b;
+    if (have == FRAME_LEN) {
+      handleFrame(buf);
+      have = 0;
+    }
+  }
+}
+
+void aiUartInit(void)
+{
+  const uart_config_t cfg = {
+    .baud_rate = AI_BAUD,
+    .data_bits = UART_DATA_8_BITS,
+    .parity = UART_PARITY_DISABLE,
+    .stop_bits = UART_STOP_BITS_1,
+    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+    .source_clk = UART_SCLK_DEFAULT,
+  };
+  uart_driver_install(AI_UART, 256, 0, 0, NULL, 0);
+  uart_param_config(AI_UART, &cfg);
+  uart_set_pin(AI_UART, AI_TX_PIN, AI_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+  xTaskCreate(aiUartTask, "AIUART", 3072, NULL, 3, NULL);
+  DEBUG_PRINTI("AI UART ready: RX=GPIO%d TX=GPIO%d\n", AI_RX_PIN, AI_TX_PIN);
+}
+
+PARAM_GROUP_START(aiuart)
+PARAM_ADD(PARAM_UINT8, enable, &enable)
+PARAM_GROUP_STOP(aiuart)
+
+LOG_GROUP_START(aiuart)
+LOG_ADD(LOG_FLOAT, vx, &logVx)
+LOG_ADD(LOG_FLOAT, vy, &logVy)
+LOG_ADD(LOG_FLOAT, z, &logZ)
+LOG_ADD(LOG_FLOAT, yaw, &logYaw)
+LOG_ADD(LOG_UINT8, target, &logTarget)
+LOG_ADD(LOG_UINT16, bad, &badFrames)
+LOG_GROUP_STOP(aiuart)</script>
+
+<script type="text/plain" id="c-xiao">// xiao_tracker.ino - bám vật màu đỏ, gửi lệnh vận tốc cho flight controller qua UART
+#include "esp_camera.h"
+
+#define FC_RX_PIN 44   // D7 <- GPIO27 (TX2) của ESP32 bay
+#define FC_TX_PIN 43   // D6 -> GPIO26 (RX2) của ESP32 bay
+
+const float HOVER_Z     = 0.50f;  // m, độ cao giữ
+const float VX_MAX      = 0.25f;  // m/s
+const float YAW_MAX     = 40.0f;  // deg/s
+const int   MIN_PIXELS  = 60;     // ít hơn = coi như không thấy vật
+const int   TARGET_AREA = 900;    // số pixel khi vật ở khoảng cách mong muốn (đo thực tế)
+
+struct Cmd { float vx, vy, z, yaw; bool target; };
+
+bool initCamera() {
+  camera_config_t c = {};
+  c.ledc_channel = LEDC_CHANNEL_0;
+  c.ledc_timer   = LEDC_TIMER_0;
+  c.pin_d0 = 15; c.pin_d1 = 17; c.pin_d2 = 18; c.pin_d3 = 16;
+  c.pin_d4 = 14; c.pin_d5 = 12; c.pin_d6 = 11; c.pin_d7 = 48;
+  c.pin_xclk = 10; c.pin_pclk = 13; c.pin_vsync = 38; c.pin_href = 47;
+  c.pin_sccb_sda = 40; c.pin_sccb_scl = 39;
+  c.pin_pwdn = -1; c.pin_reset = -1;
+  c.xclk_freq_hz = 20000000;
+  c.pixel_format = PIXFORMAT_RGB565;
+  c.frame_size   = FRAMESIZE_QQVGA;       // 160x120, đủ nhanh cho bám màu
+  c.fb_count     = 2;
+  c.fb_location  = CAMERA_FB_IN_PSRAM;
+  c.grab_mode    = CAMERA_GRAB_LATEST;
+  return esp_camera_init(&c) == ESP_OK;
+}
+
+bool isTargetPixel(uint16_t p) {
+  uint8_t r = (p >> 11) << 3;
+  uint8_t g = ((p >> 5) & 0x3F) << 2;
+  uint8_t b = (p & 0x1F) << 3;
+  return r > 120 && r > g + 50 && r > b + 50;
+}
+
+// ex: độ lệch ngang của vật, -1 (mép trái) .. +1 (mép phải); area: số pixel của vật
+Cmd computeCommand(bool seen, float ex, int area) {
+  Cmd c = {0, 0, HOVER_Z, 0, seen};
+  if (!seen) return c;                          // mất vật: đứng yên tại chỗ
+  if (fabsf(ex) > 0.10f) c.yaw = -ex * YAW_MAX; // vật lệch phải -> xoay phải (yaw âm)
+  float e = (TARGET_AREA - area) / (float)TARGET_AREA;
+  c.vx = constrain(e * VX_MAX, -VX_MAX, VX_MAX); // vật nhỏ -> tiến, vật to -> lùi
+  return c;
+}
+
+void sendFrame(const Cmd &c) {
+  static uint8_t seq = 0;
+  int16_t v[4] = { (int16_t)(c.vx * 1000), (int16_t)(c.vy * 1000),
+                   (int16_t)(c.z * 1000),  (int16_t)(c.yaw * 10) };
+  uint8_t f[13];
+  f[0] = 0xA5; f[1] = 0x5A; f[2] = seq++;
+  for (int i = 0; i < 4; i++) {
+    f[3 + 2 * i] = v[i] & 0xFF;
+    f[4 + 2 * i] = (v[i] >> 8) & 0xFF;
+  }
+  f[11] = c.target ? 1 : 0;
+  uint8_t x = 0;
+  for (int i = 2; i < 12; i++) x ^= f[i];
+  f[12] = x;
+  Serial1.write(f, sizeof(f));
+}
+
+void setup() {
+  Serial.begin(115200);
+  Serial1.begin(115200, SERIAL_8N1, FC_RX_PIN, FC_TX_PIN);
+  if (!initCamera()) {
+    while (true) { Serial.println("Camera init failed"); delay(1000); }
+  }
+}
+
+void loop() {
+  camera_fb_t *fb = esp_camera_fb_get();
+  if (!fb) return;
+
+  const int W = fb->width, H = fb->height;
+  long sx = 0; int n = 0;
+  for (int y = 0; y < H; y += 2) {
+    for (int x = 0; x < W; x += 2) {
+      int i = (y * W + x) * 2;
+      uint16_t p = (fb->buf[i] << 8) | fb->buf[i + 1];
+      if (isTargetPixel(p)) { sx += x; n++; }
+    }
+  }
+  esp_camera_fb_return(fb);
+
+  int area = n * 4;                 // lấy mẫu 1/4 số pixel
+  bool seen = area >= MIN_PIXELS;
+  float ex = seen ? (sx / (float)n - W / 2.0f) / (W / 2.0f) : 0;
+  Cmd c = computeCommand(seen, ex, area);
+  sendFrame(c);
+  Serial.printf("seen=%d ex=%.2f area=%d vx=%.2f yaw=%.1f\n", seen, ex, area, c.vx, c.yaw);
+}</script>
+
+<script type="text/plain" id="c-ei">// Trong loop() của ví dụ esp32_camera, sau khi gọi run_classifier(&signal, &result, false):
+bool seen = false; float ex = 0, best = 0;
+for (uint32_t i = 0; i < result.bounding_boxes_count; i++) {
+  ei_impulse_result_bounding_box_t bb = result.bounding_boxes[i];
+  if (bb.value < 0.6f || bb.value <= best) continue;   // bỏ kết quả kém tin cậy
+  best = bb.value;
+  seen = true;
+  float cx = bb.x + bb.width / 2.0f;
+  ex = (cx - EI_CLASSIFIER_INPUT_WIDTH / 2.0f) / (EI_CLASSIFIER_INPUT_WIDTH / 2.0f);
+}
+Cmd c = computeCommand(seen, ex, TARGET_AREA);   // FOMO: area cố định -> vx = 0, chỉ bám hướng
+sendFrame(c);</script>
+
+<script type="text/plain" id="c-mix">// ESP-Drone: power_distribution_stock.c (QUAD_FORMATION_X)
+int16_t r = control->roll / 2.0f;
+int16_t p = control->pitch / 2.0f;
+motorPower.m1 = limitThrust(control->thrust - r + p + control->yaw);
+motorPower.m2 = limitThrust(control->thrust - r - p - control->yaw);
+motorPower.m3 = limitThrust(control->thrust + r - p + control->yaw);
+motorPower.m4 = limitThrust(control->thrust + r + p - control->yaw);</script>
+
+<script>
+(function(){
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const NS = 'http://www.w3.org/2000/svg';
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function el(tag, attrs={}, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+/* ---------- tabs ---------- */
+const tabs = $$('#tabs button');
+function show(id){
+  if (!document.getElementById('t-' + id)) id = 'bom';
+  tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.t === id));
+  $$('section.tab').forEach(s => s.hidden = s.id !== 't-' + id);
+  try{ history.replaceState(null, '', '#' + id); }catch(e){}
+  store.set('md-tab', id);
+}
+tabs.forEach(b => b.addEventListener('click', () => { show(b.dataset.t); window.scrollTo({top:0}); }));
+show((location.hash || '').slice(1) || store.get('md-tab', 'bom'));
+window.addEventListener('load', () => window.scrollTo(0, 0));
+requestAnimationFrame(() => window.scrollTo(0, 0));
+
+/* ---------- code blocks ---------- */
+$$('pre.code[data-src]').forEach(pre => {
+  const src = document.getElementById(pre.dataset.src);
+  const code = document.createElement('code');
+  code.textContent = src ? src.textContent.replace(/^\n/, '') : '';
+  pre.appendChild(code);
+  const b = document.createElement('button');
+  b.className = 'cp'; b.type = 'button'; b.textContent = 'Copy';
+  b.addEventListener('click', () => {
+    const done = () => { b.textContent = 'Đã copy'; setTimeout(() => b.textContent = 'Copy', 1400); };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Bấm Ctrl+C'; };
+    try{ navigator.clipboard.writeText(code.textContent).then(done, fallback); }catch(e){ fallback(); }
+  });
+  pre.appendChild(b);
+});
+
+/* ---------- BOM ---------- */
+const BOM = [
+  ['Bộ não: ESP32-WROOM-32 DevKit V1 (30 chân)', 1, 150, 'Chạy chương trình bay, phát Wi-Fi', 'keep'],
+  ['Cảm giác thăng bằng: MPU6050 GY-521', 1, 65, 'Biết máy bay đang nghiêng thế nào', 'keep'],
+  ['Mắt nhìn sàn: PMW3901 loại SPI (CJMCU-3901)', 1, 309, 'Giữ máy bay đứng yên một chỗ', 'keep'],
+  ['Thước đo độ cao: VL53L1X', 1, 152, 'Giữ máy bay ở đúng độ cao', 'keep'],
+  ['Động cơ 8520 3,7 V (2 quay xuôi + 2 quay ngược)', 4, 156, 'Quay cánh quạt; nhớ mua đủ 2 chiều', 'fix'],
+  ['Cánh quạt 55 mm, lỗ 0,8 mm (2 cánh A + 2 cánh B)', 4, 65, 'Đẩy không khí xuống', 'keep'],
+  ['Khung 90 mm cho động cơ 8520', 1, 35, 'Bộ xương máy bay, có vòng bảo vệ cánh', 'keep'],
+  ['MOSFET AO3400 (gói 5 con)', 1, 7, 'Công tắc điện tử cho động cơ', 'keep'],
+  ['Điện trở, tụ, bảng mạch đục lỗ, đế chip, dây silicon', 1, 80, 'Làm mạch động cơ (xem bảng nhỏ bên dưới)', 'keep'],
+  ['Pin LiPo 1S 450 mAh, đầu PH2.0', 2, 226, 'Nguồn điện; xem nhãn pin là 4,2 V hay 4,35 V', 'keep'],
+  ['Đầu cắm PH2.0 và dây', 1, 30, 'Cắm pin vào máy bay; rút ra là tắt máy', 'keep'],
+  ['Bộ sạc pin 1S (đúng loại pin)', 1, 40, 'Sạc pin, luôn có người lớn trông', 'keep'],
+  ['Mắt thông minh: XIAO ESP32-S3 Sense có camera', 1, 989, 'Nhìn và tìm đồ vật', 'keep'],
+  ['Ốc nhỏ, đệm cao su, dây JST', 1, 70, 'Gắn đồ chắc chắn, giảm rung', 'keep'],
+  ['Cánh quạt dự phòng', 2, 70, 'Tập bay rất hay gãy cánh', 'keep'],
+  ['Bộ đổi điện buck-boost 3,3 V (TPS63020 hoặc Pololu S7V8F3)', 1, 90, 'Giữ điện luôn đúng 3,3 V cho bộ não', 'add'],
+  ['Diode Schottky SS14', 4, 5, 'Bảo vệ MOSFET, mỗi động cơ 1 con', 'add'],
+  ['Tụ điện 470–1000 µF 6,3 V', 1, 5, 'Cấp thêm điện khi động cơ tăng tốc', 'add'],
+  ['Cáp USB có truyền dữ liệu, đồng hồ đo điện', 1, 0, 'Nạp chương trình, đo dây (nếu nhà chưa có)', 'opt'],
+];
+const LBL = {keep:'giữ nguyên', fix:'chú ý', add:'thêm mới', opt:'nếu cần'};
+const bought = store.get('md-bom', {});
+const tb = $('#bomTable tbody');
+BOM.forEach((r, i) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="checkbox" id="bom${i}" aria-label="Đã mua ${r[0]}"></td><td class="mono">${i+1}</td><td><label for="bom${i}">${r[0]}</label></td><td class="num">${r[1]}</td><td class="num">${r[2] ? r[2] : '—'}</td><td>${r[3]}</td><td><span class="chip ${r[4]}">${LBL[r[4]]}</span></td>`;
+  tb.appendChild(tr);
+  const cb = tr.querySelector('input');
+  cb.checked = !!bought[i];
+  cb.addEventListener('change', () => { bought[i] = cb.checked; store.set('md-bom', bought); bomSum(); });
+});
+function bomSum(){
+  const total = BOM.reduce((s, r) => s + r[2], 0);
+  const got = BOM.reduce((s, r, i) => s + (bought[i] ? r[2] : 0), 0);
+  $('#bomTotal').textContent = total.toLocaleString('vi-VN') + 'k';
+  $('#bomBought').textContent = 'đã mua ' + BOM.filter((r,i)=>bought[i]).length + '/' + BOM.length + ' món, ' + got.toLocaleString('vi-VN') + 'k';
+}
+bomSum();
+
+/* ---------- weight calc ---------- */
+const W = [
+  ['fr','Khung (g)',8],['mo','4 động cơ (g)',20],['pr','4 cánh quạt (g)',2.4],['fc','Bộ não, đã bỏ chân cắm (g)',7],
+  ['se','3 cảm biến (g)',5.5],['ai','XIAO + camera (g)',5.5],['dr','Mạch động cơ + bộ đổi điện (g)',5],['wi','Dây, ốc, đệm (g)',5],
+  ['ba','Pin (g)',12],['th','Lực đẩy tối đa của 1 động cơ (g)',28],['ih','Điện 1 động cơ dùng khi bay đứng yên (A)',1.4],['cap','Dung lượng pin (mAh)',450]
+];
+const calc = $('#calc');
+const wv = store.get('md-w', {});
+W.forEach(([k, l, d]) => {
+  const div = document.createElement('div');
+  div.innerHTML = `<label for="w-${k}">${l}</label><input id="w-${k}" type="number" step="0.1" min="0" value="${wv[k] ?? d}">`;
+  calc.appendChild(div);
+  div.querySelector('input').addEventListener('input', e => { wv[k] = parseFloat(e.target.value) || 0; store.set('md-w', wv); wcalc(); });
+});
+function wcalc(){
+  const g = k => parseFloat($('#w-' + k).value) || 0;
+  const mass = ['fr','mo','pr','fc','se','ai','dr','wi','ba'].reduce((s,k)=>s+g(k),0);
+  const thrust = 4 * g('th');
+  const twr = mass ? thrust / mass : 0;
+  const hover = twr ? 100 / twr : 0;
+  const amps = 4 * g('ih') + 0.45;
+  const mins = amps ? (g('cap') / 1000 * 0.8) / amps * 60 : 0;
+  const cls = twr >= 2 ? 'good' : twr >= 1.5 ? 'warn' : 'bad';
+  const verdict = twr >= 2 ? 'Rất tốt, bay khỏe' : twr >= 1.5 ? 'Bay được trong nhà, hơi chậm' : 'Nặng quá, cần bỏ bớt đồ';
+  const maxv = Math.max(thrust, mass, 1);
+  $('#scaleBars').innerHTML = `
+    <div class="row"><span>Lực đẩy 4 động cơ</span><div class="track"><i style="width:${thrust / maxv * 100}%;background:var(--ok)"></i></div><b>${thrust.toFixed(0)} g</b></div>
+    <div class="row"><span>Cân nặng máy bay</span><div class="track"><i style="width:${mass / maxv * 100}%;background:var(--n-vbat)"></i></div><b>${mass.toFixed(0)} g</b></div>`;
+  $('#kpis').innerHTML = `
+    <div class="kpi"><b>${mass.toFixed(1)} g</b><span>Cả máy bay nặng</span></div>
+    <div class="kpi ${cls}"><b>${twr.toFixed(2)} lần</b><span>Lực đẩy so với cân nặng. ${verdict}</span></div>
+    <div class="kpi ${hover > 65 ? 'warn' : 'good'}"><b>${hover.toFixed(0)} %</b><span>Phải đẩy ga bao nhiêu để máy bay đứng yên trên không</span></div>
+    <div class="kpi"><b>${mins.toFixed(1)} phút</b><span>Bay được khoảng bấy nhiêu lâu mỗi lần sạc</span></div>`;
+}
+wcalc();
+
+/* ---------- wiring diagram ---------- */
+const NETS = {
+  i2c0:['Cảm giác thăng bằng','--n-i2c0'], i2c1:['Đo độ cao','--n-i2c1'], spi:['Mắt nhìn sàn','--n-spi'],
+  mot:['Động cơ','--n-mot'], uart:['Mắt thông minh (AI)','--n-uart'], vbat:['Đo pin','--n-vbat'], led:['Đèn báo','--n-led']
+};
+const ws = $('#wsvg');
+const lp = ['EN','VP·36','VN·39','34','35','32','33','25','26','27','14','12','13','GND','VIN'];
+const rp = ['23','22','TX0·1','RX0·3','21','19','18','5','17','16','4','2','15','GND','3V3'];
+const py = i => 170 + 30 * i;
+const dk = el('g', {class:'mod', 'data-m':'devkit'}, ws);
+el('rect', {class:'box', x:440, y:130, width:200, height:490, rx:6, style:'fill:var(--board);stroke:var(--board)'}, dk);
+el('rect', {x:490, y:136, width:100, height:22, rx:2, style:'fill:none;stroke:var(--board-ink);stroke-dasharray:3 3;opacity:.6'}, dk);
+el('text', {x:540, y:151, 'text-anchor':'middle', 'font-size':10, style:'fill:var(--board-ink)'}, dk, 'ăng-ten');
+el('text', {x:540, y:262, 'text-anchor':'middle', 'font-size':16, 'font-weight':700, style:'fill:var(--board-ink);font-family:var(--f-disp)'}, dk, 'BỘ NÃO');
+el('text', {x:540, y:280, 'text-anchor':'middle', 'font-size':11, style:'fill:var(--board-ink);opacity:.85'}, dk, 'ESP32 DevKit');
+el('rect', {x:515, y:604, width:50, height:16, rx:2, style:'fill:#9aa3a0'}, dk);
+el('text', {x:540, y:640, 'text-anchor':'middle', 'font-size':11, class:'mut'}, dk, 'cổng USB (nạp chương trình)');
+lp.forEach((t, i) => { el('circle', {cx:440, cy:py(i), r:4, style:'fill:#d8c27a'}, dk); el('text', {x:450, y:py(i)+4, 'font-size':11, class:'mono', style:'fill:var(--board-ink)'}, dk, t); });
+rp.forEach((t, i) => { el('circle', {cx:640, cy:py(i), r:4, style:'fill:#d8c27a'}, dk); el('text', {x:630, y:py(i)+4, 'font-size':11, 'text-anchor':'end', class:'mono', style:'fill:var(--board-ink)'}, dk, t); });
+
+function mod(id, x, y, w, h, title, sub, pins){
+  const g = el('g', {class:'mod', 'data-m':id}, ws);
+  el('rect', {class:'box', x, y, width:w, height:h, rx:5}, g);
+  const right = x > 540;
+  const tx = right ? x + w - 10 : x + 12;
+  const anc = right ? 'end' : 'start';
+  if (title) el('text', {x:tx, y:y+20, 'font-size':13, 'font-weight':700, 'text-anchor':anc, style:'font-family:var(--f-disp)'}, g, title);
+  if (sub) el('text', {x:tx, y:y+36, 'font-size':11, 'text-anchor':anc, class:'mut'}, g, sub);
+  (pins||[]).forEach(([t, px, pyy, a]) => el('text', {x:px, y:pyy+4, 'font-size':11, 'text-anchor':a||'start', class:'mono'}, g, t));
+  return g;
+}
+mod('divider', 300, 272, 112, 36, '', '', [['100k / 100k', 308, 286]]);
+el('text', {x:294, y:294, 'font-size':11, 'text-anchor':'end', class:'mono', style:'fill:var(--n-vbat)'}, ws, 'pin ▸');
+mod('driver', 60, 304, 240, 90, 'Mạch động cơ', '4 MOSFET AO3400', [['M3', 292, 320, 'end'], ['M2', 292, 350, 'end'], ['M4', 292, 380, 'end'], ['M1', 68, 380]]);
+mod('xiao', 60, 398, 240, 54, 'Mắt thông minh', 'XIAO ESP32-S3', [['D6', 292, 410, 'end'], ['D7', 292, 440, 'end']]);
+mod('pmw', 60, 458, 240, 90, 'Mắt nhìn sàn', 'PMW3901 · mặt dưới', [['SCLK', 292, 470, 'end'], ['MISO', 292, 500, 'end'], ['MOSI', 292, 530, 'end'], ['NCS', 232, 538, 'end']]);
+mod('mpu', 780, 180, 190, 160, 'Cảm giác thăng bằng', 'MPU6050', [['SCL', 788, 200], ['SDA', 788, 290], ['INT', 788, 320], ['AD0 → GND', 962, 320, 'end']]);
+mod('vl53', 780, 398, 190, 54, 'Đo độ cao', 'VL53L1X · mặt dưới', [['SCL', 788, 410], ['SDA', 788, 440]]);
+const ledg = el('g', {class:'mod', 'data-m':'leds'}, ws);
+[[170,'--n-vbat','đỏ'],[350,'--n-i2c0','xanh dương'],[380,'--ok','xanh lá']].forEach(([y, c, t]) => {
+  el('rect', {class:'box', x:700, y:y-8, width:16, height:16, rx:8, style:`fill:var(${c});stroke:none`}, ledg);
+  el('text', {x:722, y:y+4, 'font-size':11}, ledg, 'đèn ' + t);
+});
+[['GND', 420, 560], ['VIN ✕ không nối', 420, 590]].forEach(([t, x, y]) => { el('line', {x1:440, y1:y, x2:424, y2:y, stroke:'var(--n-gnd)', 'stroke-width':2}, ws); el('text', {x, y:y+4, 'font-size':11, 'text-anchor':'end', class:'mono', style: t.startsWith('VIN') ? 'fill:var(--bad)' : ''}, ws, t); });
+[['GND', 560, '--n-gnd'], ['3V3', 590, '--n-3v3']].forEach(([t, y, c]) => { el('line', {x1:640, y1:y, x2:660, y2:y, stroke:`var(${c})`, 'stroke-width':2}, ws); el('text', {x:664, y:y+4, 'font-size':11, class:'mono'}, ws, t); });
+el('text', {x:30, y:680, 'font-size':11, class:'mut'}, ws, 'Mọi khối đều lấy điện 3V3 từ bộ đổi điện và nối chung dây GND (xem hình Điện đi từ pin tới đâu).');
+
+const WIRES = [
+  ['vbat', ['divider','devkit'], [[412,290],[440,290]]],
+  ['mot', ['driver','devkit'], [[300,320],[440,320]]],
+  ['mot', ['driver','devkit'], [[300,350],[440,350]]],
+  ['mot', ['driver','devkit'], [[300,380],[440,380]]],
+  ['mot', ['driver','devkit'], [[640,470],[730,470],[730,660],[30,660],[30,380],[60,380]]],
+  ['uart', ['xiao','devkit'], [[300,410],[440,410]]],
+  ['uart', ['xiao','devkit'], [[300,440],[440,440]]],
+  ['spi', ['pmw','devkit'], [[300,470],[440,470]]],
+  ['spi', ['pmw','devkit'], [[300,500],[440,500]]],
+  ['spi', ['pmw','devkit'], [[300,530],[440,530]]],
+  ['spi', ['pmw','devkit'], [[240,548],[240,630],[700,630],[700,530],[640,530]]],
+  ['i2c0', ['mpu','devkit'], [[640,200],[780,200]]],
+  ['i2c0', ['mpu','devkit'], [[640,290],[780,290]]],
+  ['i2c0', ['mpu','devkit'], [[640,320],[780,320]]],
+  ['i2c1', ['vl53','devkit'], [[640,410],[780,410]]],
+  ['i2c1', ['vl53','devkit'], [[640,440],[780,440]]],
+  ['led', ['leds','devkit'], [[640,170],[700,170]]],
+  ['led', ['leds','devkit'], [[640,350],[700,350]]],
+  ['led', ['leds','devkit'], [[640,380],[700,380]]],
+];
+const wireEls = WIRES.map(([net, mods, pts]) => {
+  const p = el('path', {class:'wire', d:'M' + pts.map(q => q.join(',')).join(' L'), stroke:`var(${NETS[net][1]})`}, null);
+  ws.insertBefore(p, ws.firstChild);
+  p.dataset.net = net; p.dataset.mods = mods.join(' ');
+  return p;
+});
+let selMod = null, selNet = null;
+function paint(){
+  const any = selMod || selNet;
+  ws.classList.toggle('dimmed', !!any);
+  wireEls.forEach(w => w.classList.toggle('hot', !!any && ((selMod && w.dataset.mods.includes(selMod)) || (selNet && w.dataset.net === selNet))));
+  $$('.mod', ws).forEach(m => m.classList.toggle('hot', !!any && (m.dataset.m === selMod || m.dataset.m === 'devkit' || wireEls.some(w => w.classList.contains('hot') && w.dataset.mods.includes(m.dataset.m)))));
+  $$('#legend button').forEach(b => b.setAttribute('aria-pressed', b.dataset.n === selNet));
+}
+$$('.mod', ws).forEach(m => m.addEventListener('click', () => { selNet = null; selMod = (selMod === m.dataset.m || m.dataset.m === 'devkit') ? null : m.dataset.m; paint(); }));
+const lg = $('#legend');
+Object.entries(NETS).forEach(([k, [t, c]]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.dataset.n = k;
+  b.innerHTML = `<i style="background:var(${c})"></i>${t}`;
+  b.addEventListener('click', () => { selMod = null; selNet = selNet === k ? null : k; paint(); });
+  lg.appendChild(b);
+});
+paint();
+
+/* ---------- power tree ---------- */
+(function(){
+  const s = $('#psvg');
+  const box = (x, y, w, h, t, sub, color) => {
+    el('rect', {x, y, width:w, height:h, rx:5, style:`fill:var(--panel);stroke:${color||'var(--ink)'};stroke-width:1.4`}, s);
+    el('text', {x:x+10, y:y+20, 'font-size':13, 'font-weight':700, style:'font-family:var(--f-disp)'}, s, t);
+    if (sub) el('text', {x:x+10, y:y+37, 'font-size':11, class:'mut'}, s, sub);
+  };
+  const ln = (pts, c, w) => el('path', {d:'M' + pts.map(q=>q.join(',')).join(' L'), fill:'none', stroke:c, 'stroke-width':w||3}, s);
+  box(10, 110, 120, 50, 'Pin LiPo', '3,0 – 4,2 vôn', 'var(--n-vbat)');
+  box(160, 110, 100, 50, 'Đầu cắm', 'rút ra = tắt máy');
+  ln([[130,135],[160,135]], 'var(--n-vbat)');
+  ln([[260,135],[300,135]], 'var(--n-vbat)', 5);
+  ln([[300,40],[300,250]], 'var(--n-vbat)', 5);
+  el('text', {x:292, y:30, 'text-anchor':'end', 'font-size':12, 'font-weight':700, style:'fill:var(--n-vbat);font-family:var(--f-mono)'}, s, 'ĐIỆN PIN');
+  box(340, 20, 190, 46, 'Mạch + 4 động cơ', 'dùng nhiều điện nhất', 'var(--n-mot)'); ln([[300,43],[340,43]], 'var(--n-vbat)');
+  box(340, 80, 190, 46, 'Tụ 470–1000 µF', 'đặt sát mạch động cơ', 'var(--line)'); ln([[300,103],[340,103]], 'var(--n-vbat)');
+  box(340, 140, 190, 46, '2 điện trở 100k', '→ chân 35, đo pin', 'var(--line)'); ln([[300,163],[340,163]], 'var(--n-vbat)');
+  box(340, 200, 190, 56, 'Bộ đổi điện 3,3 V', 'buck-boost, ≥ 1 A', 'var(--n-3v3)'); ln([[300,228],[340,228]], 'var(--n-vbat)');
+  ln([[530,228],[590,228]], 'var(--n-3v3)', 4);
+  ln([[590,30],[590,280]], 'var(--n-3v3)', 4);
+  el('text', {x:598, y:22, 'font-size':12, 'font-weight':700, style:'fill:var(--n-3v3);font-family:var(--f-mono)'}, s, '3,3 VÔN');
+  [['Bộ não — chân 3V3', 'không dùng chân VIN', 40], ['Cảm giác thăng bằng — VCC', '', 88], ['Mắt nhìn sàn — VCC', '', 136], ['Đo độ cao — VIN', '', 184], ['Mắt thông minh — 3V3', 'camera dùng khá nhiều điện', 232]].forEach(([t, sub, y]) => {
+    box(630, y - 16, 330, 42, t, sub, 'var(--line)');
+    ln([[590, y + 5],[630, y + 5]], 'var(--n-3v3)', 2);
+  });
+})();
+
+/* ---------- driver channel ---------- */
+(function(){
+  const s = $('#dsvg');
+  const ln = (pts, c, w) => el('path', {d:'M' + pts.map(q=>q.join(',')).join(' L'), fill:'none', stroke:c||'var(--ink)', 'stroke-width':w||2}, s);
+  const tx = (x, y, t, o={}) => el('text', Object.assign({x, y, 'font-size':12}, o), s, t);
+  ln([[30,40],[505,40]], 'var(--n-vbat)', 3); tx(30, 30, 'Điện pin (+)', {style:'fill:var(--n-vbat);font-weight:700'});
+  ln([[300,40],[300,88]], 'var(--n-vbat)');
+  el('circle', {cx:300, cy:110, r:22, style:'fill:var(--panel);stroke:var(--ink);stroke-width:2'}, s);
+  tx(300, 115, 'M', {'text-anchor':'middle', 'font-size':16, 'font-weight':700});
+  tx(270, 84, 'dây + (đỏ hoặc trắng)', {'text-anchor':'end', class:'mut', 'font-size':11});
+  tx(270, 142, 'dây − (xanh hoặc đen)', {'text-anchor':'end', class:'mut', 'font-size':11});
+  ln([[300,132],[300,165]]);
+  ln([[370,40],[370,90]]); ln([[370,122],[370,150],[300,150]]);
+  el('path', {d:'M358,122 L382,122 L370,100 Z', style:'fill:var(--ink)'}, s); ln([[358,98],[382,98]], 'var(--ink)', 2.5);
+  tx(390, 110, 'SS14'); tx(390, 126, 'vạch → dây đỏ pin', {class:'mut', 'font-size':11});
+  el('circle', {cx:300, cy:150, r:3.5, style:'fill:var(--ink)'}, s);
+  ln([[300,165],[300,185],[282,185]]); ln([[282,178],[282,232]], 'var(--ink)', 3);
+  ln([[300,225],[282,225]]); ln([[300,225],[300,262]]);
+  ln([[272,180],[272,230]], 'var(--ink)', 2.5);
+  el('path', {d:'M284,225 L294,220 L294,230 Z', style:'fill:var(--ink)'}, s);
+  tx(312, 196, 'D (chân 3)', {'font-size':11}); tx(312, 238, 'S (chân 2)', {'font-size':11});
+  tx(312, 214, 'AO3400', {'font-weight':700});
+  ln([[50,205],[100,205]], 'var(--n-mot)', 2.5); tx(24, 194, 'Bộ não', {style:'fill:var(--n-mot);font-weight:700'});
+  tx(24, 226, '4/33/32/25', {class:'mono', 'font-size':10, style:'fill:var(--n-mot)'});
+  el('rect', {x:100, y:197, width:50, height:16, style:'fill:var(--panel);stroke:var(--ink);stroke-width:2'}, s); tx(125, 190, '100 Ω', {'text-anchor':'middle'});
+  ln([[150,205],[272,205]]); tx(242, 198, 'G (1)', {'font-size':11});
+  el('circle', {cx:200, cy:205, r:3.5, style:'fill:var(--ink)'}, s);
+  ln([[200,205],[200,222]]); el('rect', {x:192, y:222, width:16, height:34, style:'fill:var(--panel);stroke:var(--ink);stroke-width:2'}, s);
+  tx(214, 244, '10 kΩ', {'font-size':11}); ln([[200,256],[200,272]]);
+  ln([[180,272],[505,272]], 'var(--n-gnd)', 3); ln([[300,262],[300,272]]);
+  tx(24, 276, 'GND (−)', {style:'fill:var(--n-gnd);font-weight:700'}); ln([[84,272],[180,272]], 'var(--n-gnd)', 3);
+  ln([[495,40],[495,200]]); ln([[480,200],[510,200]], 'var(--ink)', 3); el('path', {d:'M480,212 Q495,206 510,212', fill:'none', stroke:'var(--ink)', 'stroke-width':3}, s); ln([[495,210],[495,272]]);
+  tx(476, 232, '470 µF', {'text-anchor':'end', 'font-size':11}); tx(476, 246, '(1 cái chung)', {'text-anchor':'end', 'font-size':10, class:'mut'});
+})();
+
+/* ---------- assembly sim ---------- */
+const A = $('#asvg');
+const M = [
+  ['M1', 405, 195, 'ccw'], ['M2', 405, 405, 'cw'],
+  ['M3', 195, 405, 'ccw'], ['M4', 195, 195, 'cw']
+];
+const layer = step => el('g', {class:'part', 'data-step':step}, A);
+(function(){
+  const g = layer(1);
+  M.forEach(([, x, y]) => el('line', {x1:300, y1:300, x2:x, y2:y, stroke:'var(--frame)', 'stroke-width':12, 'stroke-linecap':'round'}, g));
+  M.forEach(([, x, y]) => el('circle', {cx:x, cy:y, r:98, fill:'none', stroke:'var(--frame)', 'stroke-width':3, opacity:.55}, g));
+  M.forEach(([, x, y]) => el('circle', {cx:x, cy:y, r:20, fill:'var(--panel)', stroke:'var(--frame)', 'stroke-width':4}, g));
+  el('rect', {class:'hl', x:245, y:215, width:110, height:170, rx:14, fill:'var(--soft)', stroke:'var(--frame)', 'stroke-width':3}, g);
+  el('path', {d:'M300,22 L314,46 L286,46 Z', fill:'var(--accent)'}, g);
+  el('text', {x:300, y:62, 'text-anchor':'middle', 'font-size':13, 'font-weight':700, style:'font-family:var(--f-disp)'}, g, 'MŨI MÁY BAY');
+})();
+(function(){
+  const g = layer(2);
+  M.forEach(([id, x, y, d]) => {
+    el('circle', {class:'hl', cx:x, cy:y, r:15, fill:'#8b949e', stroke:'var(--ink)', 'stroke-width':1.5}, g);
+    el('circle', {cx:x, cy:y, r:3, fill:'var(--ink)'}, g);
+    const lx = x > 300 ? x + 58 : x - 58, ly = y < 300 ? y - 50 : y + 58;
+    el('text', {x:lx, y:ly, 'text-anchor':'middle', 'font-size':15, 'font-weight':700, style:'font-family:var(--f-disp)'}, g, id);
+    el('text', {x:lx, y:ly + 15, 'text-anchor':'middle', 'font-size':11, class:'mut'}, g, d === 'cw' ? 'quay xuôi ↻' : 'quay ngược ↺');
+  });
+})();
+(function(){
+  const g = layer(3);
+  el('rect', {class:'hl', x:252, y:392, width:96, height:40, rx:3, fill:'#c9b27a', stroke:'var(--ink)', 'stroke-width':1.2}, g);
+  for (let i = 0; i < 4; i++) el('rect', {x:262 + i*21, y:400, width:12, height:9, fill:'#222'}, g);
+  el('text', {x:300, y:425, 'text-anchor':'middle', 'font-size':10, style:'fill:#222'}, g, 'MẠCH ĐỘNG CƠ');
+})();
+(function(){
+  const g = layer(4);
+  const ends = [[342,398],[342,428],[258,428],[258,398]];
+  M.forEach(([, x, y, d], i) => {
+    const [ex, ey] = ends[i];
+    const c1 = d === 'cw' ? '#d0342c' : '#eee', c2 = d === 'cw' ? '#2c66d4' : '#222';
+    const bend = y < 300 ? 30 : 0;
+    el('path', {class:'hl', d:`M${x},${y} Q${(x+ex)/2},${(y+ey)/2 + bend} ${ex},${ey}`, fill:'none', stroke:c1, 'stroke-width':2.5}, g);
+    el('path', {d:`M${x+3},${y+3} Q${(x+ex)/2+3},${(y+ey)/2 + bend + 3} ${ex+3},${ey}`, fill:'none', stroke:c2, 'stroke-width':2.5, opacity:.9}, g);
+  });
+})();
+(function(){
+  const g = layer(5);
+  el('rect', {class:'hl', x:352, y:392, width:30, height:22, rx:2, fill:'#3d6fb0', stroke:'var(--ink)'}, g);
+  el('text', {x:367, y:407, 'text-anchor':'middle', 'font-size':8, style:'fill:#fff'}, g, '3V3');
+  el('circle', {cx:236, cy:404, r:11, fill:'#27324a', stroke:'var(--ink)'}, g);
+  el('rect', {x:282, y:434, width:36, height:14, rx:2, fill:'#f2f2ee', stroke:'var(--ink)'}, g);
+  el('text', {x:300, y:470, 'text-anchor':'middle', 'font-size':11, class:'mut'}, g, 'đầu cắm pin · tụ · bộ đổi điện');
+})();
+(function(){
+  const g = layer(6);
+  el('rect', {class:'hl under', x:262, y:230, width:76, height:150, rx:6, fill:'rgba(208,52,44,.08)', stroke:'var(--n-vbat)', 'stroke-width':2}, g);
+  el('text', {x:300, y:250, 'text-anchor':'middle', 'font-size':10, style:'fill:var(--n-vbat)'}, g, 'pin (mặt dưới)');
+})();
+(function(){
+  const g = layer(7);
+  el('rect', {class:'hl', x:256, y:214, width:88, height:172, rx:4, fill:'var(--board)', stroke:'var(--ink)', 'stroke-width':1.2}, g);
+  el('rect', {x:272, y:228, width:56, height:62, rx:2, fill:'#b8bcc0'}, g);
+  el('text', {x:300, y:262, 'text-anchor':'middle', 'font-size':9, style:'fill:#222'}, g, 'BỘ NÃO');
+  el('rect', {x:288, y:372, width:24, height:14, fill:'#9aa3a0'}, g);
+})();
+(function(){
+  const g = layer(8);
+  el('rect', {class:'hl', x:272, y:302, width:56, height:44, rx:3, fill:'#2a55a8', stroke:'var(--ink)'}, g);
+  el('rect', {x:292, y:316, width:16, height:16, fill:'#111'}, g);
+  el('path', {d:'M300,312 L300,292 M294,298 L300,290 L306,298', stroke:'#ffd84d', 'stroke-width':2, fill:'none'}, g);
+  el('text', {x:310, y:300, 'font-size':10, style:'fill:#ffd84d;font-weight:700'}, g, 'X');
+})();
+(function(){
+  const g = layer(9);
+  el('rect', {class:'hl under', x:274, y:350, width:52, height:36, rx:3, fill:'rgba(130,70,200,.12)', stroke:'var(--n-spi)', 'stroke-width':2}, g);
+  el('circle', {cx:300, cy:368, r:7, fill:'none', stroke:'var(--n-spi)', 'stroke-width':2}, g);
+  el('text', {x:236, y:372, 'text-anchor':'end', 'font-size':10, style:'fill:var(--n-spi)'}, g, 'mắt nhìn sàn ▸');
+  el('rect', {class:'hl under', x:284, y:232, width:32, height:22, rx:3, fill:'rgba(14,143,131,.12)', stroke:'var(--n-i2c1)', 'stroke-width':2}, g);
+  el('text', {x:236, y:246, 'text-anchor':'end', 'font-size':10, style:'fill:var(--n-i2c1)'}, g, 'đo độ cao ▸');
+})();
+(function(){
+  const g = layer(10);
+  el('rect', {class:'hl', x:274, y:150, width:52, height:60, rx:4, fill:'#1f1f22', stroke:'var(--ink)'}, g);
+  el('circle', {cx:300, cy:162, r:8, fill:'#333', stroke:'#8ac', 'stroke-width':2}, g);
+  el('text', {x:300, y:196, 'text-anchor':'middle', 'font-size':9, style:'fill:#ddd'}, g, 'XIAO');
+  el('path', {d:'M300,150 L280,110 M300,150 L320,110', stroke:'var(--n-uart)', 'stroke-width':1.5, 'stroke-dasharray':'3 3'}, g);
+})();
+(function(){
+  const g = layer(11);
+  const w = (d, c) => el('path', {class:'hl', d, fill:'none', stroke:`var(${c})`, 'stroke-width':1.8}, g);
+  w('M326,190 C356,200 356,240 344,262', '--n-uart');
+  w('M328,318 C350,318 352,300 344,292', '--n-i2c0');
+  w('M326,368 C352,368 352,346 344,340', '--n-spi');
+  w('M316,243 C340,243 350,262 344,272', '--n-i2c1');
+})();
+const propEls = [];
+(function(){
+  const g = layer(12);
+  M.forEach(([, x, y, d]) => {
+    const pg = el('g', {class:'spin ' + d, style:'--dur:0s'}, g);
+    el('ellipse', {class:'hl', cx:x, cy:y, rx:90, ry:12, fill:'var(--prop)', stroke:'var(--muted)', 'stroke-width':1}, pg);
+    el('circle', {cx:x, cy:y, r:90, fill:'var(--prop)', stroke:'none', opacity:.35}, pg);
+    propEls.push(pg);
+    el('text', {x:x, y:y + (y < 300 ? -100 : 112), 'text-anchor':'middle', 'font-size':20, style:'fill:var(--accent);font-weight:700'}, g, d === 'cw' ? '↻' : '↺');
+  });
+})();
+
+const ICON = id => `<svg class="ic"><use href="#i-${id}"/></svg>`;
+const ADULT = `<span class="adult">${ICON('adult')}CẦN NGƯỜI LỚN</span>`;
+const STEPS = [
+  {t:'Chuẩn bị khung', adult:false, do:['Dán băng keo màu đánh dấu mũi máy.'], warn:['Đồ ở giữa phải thấp, cánh không được đụng.'], chk:['Khung nằm phẳng trên bàn.']},
+  {t:'Gắn 4 động cơ', adult:false, do:['M1 và M3 quay ngược ↺ (thường dây đen, trắng).', 'M2 và M4 quay xuôi ↻ (thường dây đỏ, xanh).'], warn:['Màu dây có thể sai. Nhờ người lớn chạm dây vào pin 1 giây để xem chiều quay.'], chk:['Nhìn từ trên: M1 ↺, M2 ↻, M3 ↺, M4 ↻.']},
+  {t:'Hàn mạch động cơ', adult:true, do:['4 MOSFET, mỗi cái kèm 100 Ω, 10 kΩ và diode SS14.'], warn:['Vạch trắng của diode quay về dây đỏ pin.'], chk:['Đo: dây đỏ và dây đen pin không chạm nhau.']},
+  {t:'Nối dây động cơ', adult:true, do:['Dây + (đỏ/trắng) → điện pin.', 'Dây − (xanh/đen) → chân D của MOSFET.'], warn:['Nối ngược là quay ngược, phải hàn lại.'], chk:['M1 → 4, M2 → 33, M3 → 32, M4 → 25.']},
+  {t:'Đầu cắm, tụ, bộ đổi điện', adult:true, do:['Hàn đầu cắm pin, tụ lớn (chân dài là +), bộ đổi điện 3,3 V.'], warn:['Đo đầu ra bộ đổi điện trước khi nối bộ não.'], chk:['Đầu ra 3,25 – 3,35 vôn.']},
+  {t:'Chỗ để pin (mặt dưới)', adult:false, do:['Buộc dây thun dưới bụng, pin lùi về sau một chút.'], warn:['Không che mắt nhìn sàn và thước đo.'], chk:['Nhấc ở giữa bằng 2 ngón tay: máy nằm thăng bằng.']},
+  {t:'Gắn bộ não', adult:true, do:['Tháo chân cắm cho nhẹ, dán giữa thân, cổng USB quay ra sau.', '3,3 V → chân 3V3, GND → GND.'], warn:['Không nối chân VIN. Nạp bằng USB thì rút pin.'], chk:['Cắm pin: đèn sáng, không nóng.']},
+  {t:'Cảm giác thăng bằng ở giữa', adult:false, do:['Đặt đúng giữa, lót xốp mỏng.', 'Mũi tên X chỉ về mũi máy, chip ngửa lên.'], warn:['Mỗi loại bo in mũi tên hơi khác. Màn 1 lúc tập bay sẽ kiểm lại.'], chk:['SDA → 21, SCL → 22, INT → 19, AD0 → GND.']},
+  {t:'Mắt nhìn sàn + thước đo (mặt dưới)', adult:false, do:['Mắt nhìn sàn ở giữa, nhìn thẳng xuống.', 'Thước đo gần mũi, không bị che.'], warn:['Không sờ ống kính. Bóc nilon trên thước đo nếu có.'], chk:['Khi nạp, cả hai báo [OK].']},
+  {t:'Mắt thông minh ở mũi', adult:false, do:['Dán XIAO ở mũi, camera nhìn về trước.', 'D6 → 26, D7 → 27, 3V3 và GND chung.'], warn:['Không dùng miếng hàn BAT dưới XIAO.'], chk:['Đưa bóng đỏ trước camera: Serial Monitor hiện seen=1.']},
+  {t:'Gom dây cho gọn', adult:false, do:['Ép dây sát thân, dán keo nến hoặc dây rút.'], warn:['Dây cảm biến ngắn hơn 10 cm, tránh xa dây động cơ.'], chk:['Xoay tay mỗi cánh 1 vòng: không đụng gì.']},
+  {t:'Lắp cánh quạt', adult:false, do:['Cánh ↺ vào M1, M3. Cánh ↻ vào M2, M4. Mặt có chữ lên trên.'], warn:['Chỉ lắp cánh sau màn 1 (thử không cánh).'], chk:['Ga 15 %: cả 4 cánh thổi gió xuống.']},
+];
+let cur = 0;
+const list = $('#stepList');
+STEPS.forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = i + 1; b.title = s.t; b.addEventListener('click', () => go(i)); list.appendChild(b); });
+function go(i){
+  cur = Math.max(0, Math.min(STEPS.length - 1, i));
+  const s = STEPS[cur];
+  const lines = (arr, cls, ic) => arr.map(x => `<div class="sline ${cls}">${ICON(ic)}<span>${x}</span></div>`).join('');
+  $('#stepBody').innerHTML = `<h3>Bước ${cur + 1}. ${s.t}</h3>${s.adult ? `<p>${ADULT}</p>` : ''}` +
+    lines(s.do, 'do', 'hand') + lines(s.warn, 'warn', 'warn') + lines(s.chk, 'chk', 'check');
+  $$('.part', A).forEach(p => { const n = +p.dataset.step; p.classList.toggle('on', n <= cur + 1); p.classList.toggle('cur', n === cur + 1); });
+  propEls.forEach(p => p.style.setProperty('--dur', cur === STEPS.length - 1 ? '.3s' : '0s'));
+  $$('button', list).forEach((b, j) => { b.classList.toggle('cur', j === cur); b.classList.toggle('done', j < cur); });
+  $('#progS').style.width = ((cur + 1) / STEPS.length * 100) + '%';
+  $('#cntS').textContent = `${cur + 1}/${STEPS.length}`;
+  $('#prevS').disabled = cur === 0; $('#nextS').disabled = cur === STEPS.length - 1;
+  store.set('md-step', cur);
+}
+$('#prevS').addEventListener('click', () => go(cur - 1));
+$('#nextS').addEventListener('click', () => go(cur + 1));
+document.addEventListener('keydown', e => {
+  const a = document.activeElement;
+  if ($('#t-assembly').hidden || (a && /INPUT|TEXTAREA/.test(a.tagName))) return;
+  if (e.key === 'ArrowRight') go(cur + 1);
+  if (e.key === 'ArrowLeft') go(cur - 1);
+});
+go(store.get('md-step', 0));
+
+/* ---------- preflight ---------- */
+const PRE = [
+  ['battery', 'Pin đầy, không phồng'],
+  ['blade', 'Cánh lành, đúng chiều, ấn chặt'],
+  ['wire', 'Không dây nào chạm cánh'],
+  ['room', 'Phòng rộng, không ai đứng gần 2 m'],
+  ['hand', 'Đặt phẳng, không chạm 3 giây'],
+  ['led', 'Đèn xanh lá nháy nhanh'],
+  ['gamepad', 'Ga ở mức 0, biết cách dừng'],
+  ['adult', 'Có người lớn, buộc dây lần đầu'],
+];
+const pre = store.get('md-pre', {});
+const ul = $('#preflight');
+PRE.forEach(([ic, t], i) => {
+  const li = document.createElement('li');
+  li.innerHTML = `${ICON(ic)}<input type="checkbox" id="pre${i}"><label for="pre${i}">${t}</label>`;
+  const cb = li.querySelector('input'); cb.checked = !!pre[i]; li.classList.toggle('done', cb.checked);
+  cb.addEventListener('change', () => { pre[i] = cb.checked; li.classList.toggle('done', cb.checked); store.set('md-pre', pre); preCount(); });
+  ul.appendChild(li);
+});
+function preCount(){ const n = PRE.filter((_, i) => pre[i]).length; $('#preCount').textContent = `Đã kiểm ${n}/${PRE.length} mục` + (n === PRE.length ? '. Sẵn sàng bay!' : ''); }
+$('#resetPre').addEventListener('click', () => { PRE.forEach((_, i) => { pre[i] = false; const cb = $('#pre' + i); cb.checked = false; cb.parentElement.classList.remove('done'); }); store.set('md-pre', pre); preCount(); });
+preCount();
+
+/* ---------- mixer sim ---------- */
+const S = $('#ssvg');
+const SM = [['M1', 290, 110, 'ccw'], ['M2', 290, 290, 'cw'], ['M3', 110, 290, 'ccw'], ['M4', 110, 110, 'cw']];
+el('path', {d:'M200,18 L212,38 L188,38 Z', fill:'var(--accent)'}, S);
+el('text', {x:200, y:54, 'text-anchor':'middle', 'font-size':11, class:'mut'}, S, 'mũi');
+SM.forEach(([, x, y]) => el('line', {x1:200, y1:200, x2:x, y2:y, stroke:'var(--frame)', 'stroke-width':10, 'stroke-linecap':'round'}, S));
+el('rect', {x:170, y:160, width:60, height:80, rx:10, fill:'var(--soft)', stroke:'var(--frame)', 'stroke-width':2}, S);
+const bodyArrow = el('text', {x:200, y:210, 'text-anchor':'middle', 'font-size':22, 'font-weight':700, style:'fill:var(--accent)'}, S, '');
+const simProps = SM.map(([id, x, y, d]) => {
+  const g = el('g', {class:'spin ' + d, style:'--dur:0s'}, S);
+  el('ellipse', {cx:x, cy:y, rx:70, ry:9, fill:'var(--prop)', stroke:'var(--muted)', 'stroke-width':1}, g);
+  el('circle', {cx:x, cy:y, r:11, fill:'#8b949e', stroke:'var(--ink)'}, S);
+  el('text', {x:x, y:y + (y < 200 ? -80 : 92), 'text-anchor':'middle', 'font-size':13, 'font-weight':700, style:'font-family:var(--f-disp)'}, S, `${id} ${d === 'cw' ? '↻' : '↺'}`);
+  return g;
+});
+const bars = $('#bars');
+const barEls = SM.map(([id]) => { const d = document.createElement('div'); d.className = 'bar'; d.innerHTML = `<div class="tube"><i></i></div>${id}<br><span>0</span>`; bars.appendChild(d); return d; });
+const lim = v => Math.max(0, Math.min(65535, Math.round(v)));
+function mix(){
+  const T = +$('#sT').value, R = +$('#sR').value, P = +$('#sP').value, Y = +$('#sY').value;
+  $('#vT').textContent = T; $('#vR').textContent = R; $('#vP').textContent = P; $('#vY').textContent = Y;
+  const r = Math.trunc(R / 2), p = Math.trunc(P / 2);
+  const m = [lim(T - r + p + Y), lim(T - r - p - Y), lim(T + r - p + Y), lim(T + r + p - Y)];
+  m.forEach((v, i) => {
+    barEls[i].querySelector('i').style.height = (v / 65535 * 100) + '%';
+    barEls[i].querySelector('span').textContent = v;
+    simProps[i].style.setProperty('--dur', v < 1500 ? '0s' : (0.08 + (1 - v / 65535) * 0.9).toFixed(2) + 's');
+  });
+  const right = m[0] + m[1], left = m[2] + m[3], front = m[0] + m[3], back = m[1] + m[2], ccwSet = m[0] + m[2], cwSet = m[1] + m[3];
+  const eff = [];
+  if (Math.abs(left - right) > 500) eff.push(left > right ? 'Hai động cơ bên trái đẩy mạnh hơn, nên máy bay nghiêng sang PHẢI.' : 'Hai động cơ bên phải đẩy mạnh hơn, nên máy bay nghiêng sang TRÁI.');
+  if (Math.abs(front - back) > 500) eff.push(front > back ? 'Hai động cơ phía trước đẩy mạnh hơn, nên mũi NGÓC lên và máy bay lùi lại.' : 'Hai động cơ phía sau đẩy mạnh hơn, nên mũi CHÚI xuống và máy bay tiến tới.');
+  if (Math.abs(ccwSet - cwSet) > 500) eff.push(ccwSet > cwSet ? 'M1 và M3 (quay ↺) quay nhanh hơn, nên thân máy bay bị đẩy xoay ngược lại, theo chiều ↻.' : 'M2 và M4 (quay ↻) quay nhanh hơn, nên thân máy bay bị đẩy xoay ngược lại, theo chiều ↺.');
+  bodyArrow.textContent = ccwSet - cwSet > 500 ? '↻' : cwSet - ccwSet > 500 ? '↺' : '';
+  $('#mixOut').textContent = (eff.length ? eff.join('\n') : '4 động cơ quay bằng nhau: máy bay chỉ bay thẳng lên hoặc hạ thẳng xuống.') +
+    (m.some(v => v === 0 || v === 65535) ? '\nCó động cơ đã quay hết sức hoặc dừng hẳn, nên máy bay khó giữ thăng bằng hơn.' : '');
+}
+['sT','sR','sP','sY'].forEach(id => $('#' + id).addEventListener('input', mix));
+$('#simReset').addEventListener('click', () => { $('#sR').value = 0; $('#sP').value = 0; $('#sY').value = 0; mix(); });
+mix();
+
+/* ---------- pictures: AI flow, message frame, ball game, connection ---------- */
+const useIc = (svg, id, x, y, w, color) => el('use', {href:'#i-' + id, x, y, width:w, height:w, style:`color:var(${color})`}, svg);
+function box(svg, x, y, w, h, stroke){ return el('rect', {x, y, width:w, height:h, rx:12, fill:'var(--panel)', stroke:`var(${stroke})`, 'stroke-width':2}, svg); }
+function label(svg, x, y, t, o={}){ return el('text', Object.assign({x, y, 'text-anchor':'middle', 'font-size':14, 'font-weight':700, style:'font-family:var(--f-disp)'}, o), svg, t); }
+function arrow(svg, x1, y1, x2, y2, color){
+  el('line', {x1, y1, x2, y2, stroke:`var(${color})`, 'stroke-width':3, 'stroke-linecap':'round'}, svg);
+  const a = Math.atan2(y2 - y1, x2 - x1), s = 9;
+  el('path', {d:`M${x2},${y2} L${x2 - s * Math.cos(a - .5)},${y2 - s * Math.sin(a - .5)} L${x2 - s * Math.cos(a + .5)},${y2 - s * Math.sin(a + .5)} Z`, fill:`var(${color})`}, svg);
+}
+(function(){
+  const s = $('#flowsvg');
+  box(s, 20, 30, 140, 110, '--n-uart'); useIc(s, 'camera', 60, 40, 60, '--n-uart'); label(s, 90, 125, 'Camera');
+  box(s, 210, 30, 160, 110, '--n-uart'); useIc(s, 'ball', 262, 40, 56, '--bad'); label(s, 290, 118, 'Mắt thông minh'); label(s, 290, 134, 'tìm bóng', {'font-size':12, 'font-weight':400, class:'mut'});
+  box(s, 440, 30, 170, 110, '--board'); useIc(s, 'brain', 495, 38, 60, '--board'); label(s, 525, 118, 'Bộ não'); label(s, 525, 134, 'giữ thăng bằng', {'font-size':12, 'font-weight':400, class:'mut'});
+  box(s, 680, 30, 200, 110, '--n-mot');
+  [0,1,2,3].forEach(i => useIc(s, 'motor', 692 + i * 46, 44, 42, '--n-mot')); label(s, 780, 125, '4 động cơ');
+  arrow(s, 162, 85, 206, 85, '--n-uart');
+  arrow(s, 372, 85, 436, 85, '--n-uart'); label(s, 404, 72, '2 dây', {'font-size':12});
+  arrow(s, 612, 85, 676, 85, '--n-mot');
+  [['balance','thăng bằng','--n-i2c0',410],['eyedown','nhìn sàn','--n-spi',500],['ruler','độ cao','--n-i2c1',590]].forEach(([ic, t, c, x]) => {
+    box(s, x - 38, 176, 76, 58, c); useIc(s, ic, x - 14, 180, 28, c); label(s, x, 226, t, {'font-size':11});
+    arrow(s, x, 174, 525 + (x - 500) * 0.4, 144, c);
+  });
+})();
+(function(){
+  const G = [[['A5','5A'],'bắt đầu','--muted'],[['#'],'số thứ tự','--muted'],[['vx','vx'],'tiến / lùi','--n-i2c0'],[['vy','vy'],'trái / phải','--n-i2c1'],[['z','z'],'độ cao','--n-spi'],[['yaw','yaw'],'xoay','--n-mot'],[['?'],'thấy bóng?','--n-uart'],[['✓'],'kiểm tra','--n-gnd']];
+  $('#frameStrip').innerHTML = G.map(([cells, t, c]) => `<div class="fg"><div class="cells">${cells.map(x => `<i style="background:var(${c})">${x}</i>`).join('')}</div><span>${t}</span></div>`).join('');
+})();
+(function(){
+  const P = [[125,55,12,'Bóng lệch phải → xoay phải ↻'],[80,55,7,'Bóng nhỏ, ở xa → tiến lên ↑'],[80,55,34,'Bóng to, ở gần → lùi lại ↓'],[null,0,0,'Không thấy bóng → đứng yên']];
+  $('#ballGame').innerHTML = P.map(([x, y, r, t]) => `<figure><svg viewBox="0 0 160 110" role="img" aria-label="${t}"><rect width="160" height="110" rx="6" fill="#1d2733"/><path d="M80 0v110M0 55h160" stroke="#3a4a5e" stroke-dasharray="4 4"/>${x === null ? '<text x="80" y="68" text-anchor="middle" font-size="40" style="fill:#8fa3c0">?</text>' : `<circle cx="${x}" cy="${y}" r="${r}" fill="#e0443a"/><circle cx="${x - r * .35}" cy="${y - r * .35}" r="${Math.max(1.5, r * .25)}" fill="#fff" opacity=".6"/>`}<text x="8" y="16" font-size="10" style="fill:#8fa3c0">camera</text></svg><figcaption>${t}</figcaption></figure>`).join('');
+})();
+(function(){
+  const s = $('#connsvg');
+  box(s, 20, 30, 190, 180, '--line'); useIc(s, 'phone', 65, 42, 100, '--accent'); label(s, 115, 170, 'Điện thoại'); label(s, 115, 190, 'app ESP-Drone', {'font-size':12, 'font-weight':400, class:'mut'});
+  box(s, 690, 30, 190, 180, '--line'); useIc(s, 'laptop', 700, 40, 90, '--n-i2c0'); useIc(s, 'gamepad', 790, 70, 76, '--n-i2c0'); label(s, 785, 170, 'Máy tính + tay cầm'); label(s, 785, 190, 'cfclient', {'font-size':12, 'font-weight':400, class:'mut'});
+  useIc(s, 'drone', 375, 36, 150, '--frame'); label(s, 450, 204, 'Máy bay phát Wi-Fi'); label(s, 450, 224, 'ESP-DRONE_XXXX', {'font-size':12, class:'mono'});
+  [[214, 322],[578, 686]].forEach(([a, b]) => { el('line', {x1:a, y1:110, x2:b, y2:110, stroke:'var(--n-uart)', 'stroke-width':3, 'stroke-dasharray':'6 6'}, s); useIc(s, 'wifi', (a + b) / 2 - 22, 58, 44, '--n-uart'); });
+  label(s, 450, 22, 'Chọn một trong hai cách', {'font-size':13, 'font-weight':600, class:'mut'});
+})();
+})();
+</script>

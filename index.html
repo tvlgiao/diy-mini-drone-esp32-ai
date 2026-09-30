@@ -486,7 +486,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <tbody>
         <tr><td class="mono">Brownout detector was triggered</td><td>Thiếu điện</td><td>Kiểm bộ đổi điện 3,3 V, dây nguồn, tụ 470 µF</td></tr>
         <tr><td class="mono">MPU6050 ... [FAIL]</td><td>Không thấy cảm giác thăng bằng</td><td>Dây 21, 22, 3V3; AD0 nối GND</td></tr>
-        <tr><td class="mono">PMW3901 SPI connection [FAIL].</td><td>Không thấy mắt nhìn sàn</td><td>Dây 12, 13, 14, 15 và 3V3</td></tr>
+        <tr><td class="mono">PMW3901 SPI connection [FAIL].</td><td>Không thấy mắt nhìn sàn</td><td>Dây 12, 13, 14, 15 và 3V3. Chưa lắp mắt nhìn sàn thì báo FAIL là bình thường, máy vẫn bay được</td></tr>
         <tr><td class="mono">VL53L1X ... [FAIL]</td><td>Không thấy thước đo</td><td>Phải nối chân 16, 17</td></tr>
         <tr><td class="mono">flash read err, 1000</td><td>Chân 12 làm khởi động sai</td><td>Xem mục GPIO12 ở tab Nối dây</td></tr>
         <tr><td>Động cơ giật khi bật</td><td>Thiếu điện trở 10 kΩ</td><td>Thêm 10 kΩ cho từng động cơ</td></tr>
@@ -614,6 +614,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="lvl"><svg class="ic"><use href="#i-hold"/></svg><i>MÀN 5</i><b>Đứng yên</b><span>Đẩy nhẹ: tự quay về chỗ cũ</span><code>poshold=1</code></div>
     <div class="lvl"><svg class="ic"><use href="#i-camera"/></svg><i>MÀN 6</i><b>Cho AI lái</b><span>Bước E ở tab Dạy máy nhìn</span></div>
   </div>
+  <div class="note ok"><svg class="ic"><use href="#i-eyedown"/></svg><span><b>Mắt nhìn sàn (PMW3901) chưa về?</b> Vẫn tập được màn 1 đến 4, vì giữ độ cao chỉ cần thước đo VL53L1X. Màn 5 và 6 mới cần mắt nhìn sàn. Hàng về thì gắn vào mặt dưới, nối 4 dây SPI, bật lại máy: máy tự nhận, không phải nạp lại.</span></div>
   <details>
     <summary><svg class="ic"><use href="#i-gear"/></svg>Máy bay bay chưa đẹp? Chỉnh số (người lớn)</summary>
     <p>cfclient → Parameters, mỗi lần một số. Tên đầy đủ: <code>flightmode.poshold</code>, <code>flightmode.althold</code>. Xem <code>range.zrange</code> (độ cao, mm) và <code>motion.squal</code> (&gt; 30 là sàn đủ vân).</p>
@@ -1042,7 +1043,7 @@ const partSvg = k => `<svg class="pimg" viewBox="0 0 120 80" aria-hidden="true">
 const BOM = [
   ['esp32', 'Bộ não: ESP32-WROOM-32 DevKit 30 chân (chọn phân loại CH340 Type-C có cáp)', 1, 125, 'Chạy chương trình bay, phát Wi-Fi', 'fix'],
   ['mpu', 'Cảm giác thăng bằng: MPU6050 GY-521', 1, 65, 'Biết máy bay đang nghiêng thế nào', 'keep'],
-  ['pmw', 'Mắt nhìn sàn: PMW3901 loại SPI (CJMCU-3901)', 1, 332, 'Giữ máy bay đứng yên một chỗ. Chỉ có hàng ship từ nước ngoài, chờ 1–2 tuần', 'fix'],
+  ['pmw', 'Mắt nhìn sàn: PMW3901 loại SPI (CJMCU-3901)', 1, 332, 'Giữ máy bay đứng yên một chỗ. Chỉ có hàng ship từ nước ngoài, chờ 1–2 tuần; có thể lắp sau (màn 1–4 bay được khi chưa có)', 'fix'],
   ['vl53', 'Thước đo độ cao: VL53L1X', 1, 152, 'Giữ máy bay ở đúng độ cao', 'keep'],
   ['motor', 'Động cơ 8520 3,7 V, trục 1 mm (2 cái dây xanh-đỏ + 2 cái dây trắng-đen)', 4, 156, 'Quay cánh quạt; mỗi màu dây là 1 chiều quay', 'fix'],
   ['prop', 'Cánh quạt 55 mm, lỗ 1 mm (mỗi bộ 1 cánh A + 1 cánh B)', 2, 32, 'Đẩy không khí xuống. Lỗ phải 1 mm cho vừa trục động cơ', 'fix'],
@@ -1634,7 +1635,7 @@ const STEPS = [
   {t:'Chỗ để pin (mặt dưới)', adult:false, do:['Luồn dây ràng qua 2 rãnh ở đuôi, ôm pin nằm ngang dưới bụng.'], warn:['Không che mắt nhìn sàn và thước đo.'], chk:['Nhấc ở giữa bằng 2 ngón tay: máy nằm thăng bằng.']},
   {t:'Gắn bộ não', adult:true, do:['Tháo chân cắm cho nhẹ, dán giữa thân, cổng USB quay ra sau.', '3,3 V → chân 3V3, GND → GND.'], warn:['Không nối chân VIN. Nạp bằng USB thì rút pin.'], chk:['Cắm pin: đèn sáng, không nóng.']},
   {t:'Cảm giác thăng bằng ở giữa', adult:false, do:['Đặt đúng giữa, lót xốp mỏng.', 'Mũi tên X in trên bo chỉ về mũi máy, mũi tên Y chỉ sang trái, chip ngửa lên.'], warn:['Lắp lệch hướng thì máy lật ngay. Màn 1 lúc tập bay sẽ kiểm lại.'], chk:['SDA → 21, SCL → 22, INT → 19, AD0 → GND.']},
-  {t:'Mắt nhìn sàn + thước đo (mặt dưới)', adult:false, do:['Mắt nhìn sàn ở giữa, nhìn thẳng xuống.', 'Thước đo gần mũi, không bị che.'], warn:['Không sờ ống kính. Bóc nilon trên thước đo nếu có.', 'Ở màn 5, máy càng lúc càng trôi xa thay vì quay về: xoay mắt nhìn sàn 90° rồi thử lại.'], chk:['Khi nạp, cả hai báo [OK].']},
+  {t:'Mắt nhìn sàn + thước đo (mặt dưới)', adult:false, do:['Mắt nhìn sàn chưa về thì lắp thước đo trước, mắt nhìn sàn gắn sau.', 'Mắt nhìn sàn ở giữa, nhìn thẳng xuống.', 'Thước đo gần mũi, không bị che.'], warn:['Không sờ ống kính. Bóc nilon trên thước đo nếu có.', 'Ở màn 5, máy càng lúc càng trôi xa thay vì quay về: xoay mắt nhìn sàn 90° rồi thử lại.'], chk:['Khi nạp, cả hai báo [OK].']},
   {t:'Mắt thông minh ở mũi', adult:false, do:['Dựng đứng XIAO ở lưỡi mũi, mặt có camera quay về trước, buộc dây rút qua 2 rãnh.', 'D6 → 26, D7 → 27, 3V3 và GND chung.'], warn:['Không dùng miếng hàn BAT dưới XIAO.'], chk:['Đưa bóng đỏ trước camera: Serial Monitor hiện seen=1.']},
   {t:'Gom dây cho gọn', adult:false, do:['Ép dây sát thân, dán keo nến hoặc dây rút.'], warn:['Dây cảm biến ngắn hơn 10 cm, tránh xa dây động cơ.'], chk:['Xoay tay mỗi cánh 1 vòng: không đụng gì.']},
   {t:'Lắp cánh quạt', adult:false, do:['Cánh <b>B</b> (quay ngược ↺) vào M1 và M3.', 'Cánh <b>A</b> (quay xuôi ↻) vào M2 và M4. Mặt có chữ lên trên.', 'Đối chiếu với <a href="https://github.com/espressif/esp-drone/blob/master/docs/_static/espdrone_s2_v1_2_diretion.png" target="_blank" rel="noopener">ảnh gốc ESP-Drone</a>: M4-A, M1-B, M3-B, M2-A.'], warn:['Chỉ lắp cánh sau màn 1 (thử không cánh).'], chk:['Ga 15 %: cả 4 cánh thổi gió xuống.']},

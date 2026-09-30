@@ -141,6 +141,9 @@ svg .wire.hot{stroke-width:4}
 .asm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
 @media (max-width:860px){.asm{grid-template-columns:1fr}.stage{position:static}}
 .stage{position:sticky;top:108px}
+.vtog{display:flex;gap:6px;margin-bottom:8px}.vtog .btn{padding:5px 12px;font-size:13px}
+.sim3d{width:100%;aspect-ratio:600/560;min-height:320px;background:var(--panel);border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden}
+.sim3d[hidden],.stage svg[hidden]{display:none}
 .stage svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px}
 .part{opacity:0;transform:translateY(-26px);transition:opacity .45s ease,transform .45s ease}
 .part.on{opacity:1;transform:none}
@@ -439,7 +442,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div id="stepBody"></div>
       <div class="steplist" id="stepList"></div>
     </div>
-    <div class="stage"><svg id="asvg" viewBox="0 0 600 580" role="img" aria-label="Mô phỏng lắp ráp nhìn từ trên xuống"></svg></div>
+    <div class="stage"><div class="vtog" role="group" aria-label="Kiểu xem"><button type="button" class="btn" data-v="3d">Xem 3D</button><button type="button" class="btn ghost" data-v="2d">Xem 2D</button></div><div id="asm3d" class="sim3d"></div><svg hidden id="asvg" viewBox="0 0 600 580" role="img" aria-label="Mô phỏng lắp ráp nhìn từ trên xuống"></svg></div>
   </div>
 </section>
 
@@ -934,6 +937,7 @@ motorPower.m2 = limitThrust(control->thrust - r - p - control->yaw);
 motorPower.m3 = limitThrust(control->thrust + r - p + control->yaw);
 motorPower.m4 = limitThrust(control->thrust + r + p - control->yaw);</script>
 
+<script src="asm3d.js"></script>
 <script>
 (function(){
 const $ = (s, r=document) => r.querySelector(s);
@@ -1559,8 +1563,8 @@ const FG = (() => {
   );
   /* 10. XIAO */
   F[9] = row(
-    panel(plate(10, 150, 70) + `<rect x="110" y="56" width="42" height="12" rx="2" fill="#1a1a1a"/><rect x="152" y="54" width="8" height="16" fill="#333"/><circle cx="162" cy="62" r="4" fill="#6fb3ff"/>` + ar(168, 62, 196, 62, C.ok) + t(130, 44, 'XIAO + camera', {s: 9}) + nose(172, 100),
-      '<b>1</b> Đặt XIAO trên lưỡi mũi, camera nhìn thẳng về phía trước.'),
+    panel(plate(10, 150, 80) + `<rect x="138" y="36" width="10" height="44" rx="2" fill="#1a1a1a"/><rect x="148" y="46" width="6" height="16" fill="#333"/><circle cx="157" cy="54" r="4" fill="#6fb3ff"/><path d="M134 66h18" stroke="${C.yellow}" stroke-width="3"/>` + ar(162, 54, 196, 54, C.ok) + t(96, 30, 'XIAO dựng đứng', {s: 9}) + t(96, 104, 'dây rút qua 2 rãnh', {s: 9}) + nose(172, 100),
+      '<b>1</b> Camera nằm trên mặt bo, nên phải <b>dựng đứng</b> XIAO ở mũi thì camera mới nhìn về trước.'),
     panel(t(100, 40, 'D6 → GPIO 26', {s: 12, w: 800}) + t(100, 62, 'D7 → GPIO 27', {s: 12, w: 800}) + t(100, 84, '3V3 và GND chung', {s: 11}) + no(100, 108) + t(116, 112, 'không dùng BAT', {s: 9, a: 'start'}),
       '<b>2</b> Nối 2 dây tín hiệu, 3V3 và GND. Không hàn vào miếng BAT ở mặt dưới XIAO.'),
     panel(topFrame(70, 65, .62) + `<rect x="${70 + 38.5 * .62}" y="${65 - 8.75 * .62}" width="${21 * .62}" height="${17.5 * .62}" fill="#6b7070" stroke="#fff"/>` + `<path d="M${70 + 46 * .62} ${65 - 13 * .62}v${26 * .62}" stroke="${C.yellow}" stroke-width="2.4"/>` + t(150, 110, 'dây rút qua 2 rãnh mũi', {s: 9}) + nose(160, 16),
@@ -1586,6 +1590,18 @@ const FG = (() => {
   return F;
 })();
 
+/* ---------- 3D (asm3d.js, three.js tải từ jsDelivr; lỗi thì tự hiện thông báo) ---------- */
+window.SIM3D = window.initAsm3D ? window.initAsm3D(document.getElementById('asm3d')) : null;
+(function(){
+  const box = document.getElementById('asm3d'), sv = document.getElementById('asvg');
+  if (!window.SIM3D) { box.hidden = true; sv.hidden = false; document.querySelector('.vtog').hidden = true; return; }
+  document.querySelectorAll('.vtog .btn').forEach(b => b.addEventListener('click', () => {
+    const is3 = b.dataset.v === '3d';
+    box.hidden = !is3; sv.hidden = is3;
+    document.querySelectorAll('.vtog .btn').forEach(x => x.classList.toggle('ghost', x !== b));
+  }));
+})();
+
 const STEPS = [
   {t:'Chuẩn bị khung', adult:false, do:['Lấy khung carbon và 4 vòng đệm từ xưởng.', 'Dán băng keo màu lên lưỡi mũi để đánh dấu đầu máy bay.'], warn:['Mép carbon có thể sắc. Bụi carbon độc: không mài, không thổi.'], chk:['Khung nằm phẳng trên bàn.']},
   {t:'Gắn 4 động cơ', adult:false, do:['Quấn 1 lớp gen co nhiệt quanh thân động cơ, ấn chặt vào lỗ khung.', 'M1 (trước phải) và M3 (sau trái) quay ngược ↺, thường dây đen, trắng.', 'M2 (sau phải) và M4 (trước trái) quay xuôi ↻, thường dây đỏ, xanh.', 'Mũi tên trên vòng tròn chỉ chiều quay khi nhìn từ trên xuống, giống <a href="https://github.com/espressif/esp-drone/blob/master/docs/_static/espdrone_s2_v1_2_diretion.png" target="_blank" rel="noopener">ảnh gốc ESP-Drone</a>.', 'Không dùng quy ước Betaflight (chiều ngược lại).'], warn:['Màu dây có thể sai. Nhờ người lớn chạm dây vào pin 1 giây để xem chiều quay.'], chk:['Nhìn từ trên: M1 ↺, M2 ↻, M3 ↺, M4 ↻.']},
@@ -1596,7 +1612,7 @@ const STEPS = [
   {t:'Gắn bộ não', adult:true, do:['Tháo chân cắm cho nhẹ, dán giữa thân, cổng USB quay ra sau.', '3,3 V → chân 3V3, GND → GND.'], warn:['Không nối chân VIN. Nạp bằng USB thì rút pin.'], chk:['Cắm pin: đèn sáng, không nóng.']},
   {t:'Cảm giác thăng bằng ở giữa', adult:false, do:['Đặt đúng giữa, lót xốp mỏng.', 'Mũi tên X in trên bo chỉ về mũi máy, mũi tên Y chỉ sang trái, chip ngửa lên.'], warn:['Lắp lệch hướng thì máy lật ngay. Màn 1 lúc tập bay sẽ kiểm lại.'], chk:['SDA → 21, SCL → 22, INT → 19, AD0 → GND.']},
   {t:'Mắt nhìn sàn + thước đo (mặt dưới)', adult:false, do:['Mắt nhìn sàn ở giữa, nhìn thẳng xuống.', 'Thước đo gần mũi, không bị che.'], warn:['Không sờ ống kính. Bóc nilon trên thước đo nếu có.', 'Ở màn 5, máy càng lúc càng trôi xa thay vì quay về: xoay mắt nhìn sàn 90° rồi thử lại.'], chk:['Khi nạp, cả hai báo [OK].']},
-  {t:'Mắt thông minh ở mũi', adult:false, do:['Dán XIAO ở mũi, camera nhìn về trước.', 'D6 → 26, D7 → 27, 3V3 và GND chung.'], warn:['Không dùng miếng hàn BAT dưới XIAO.'], chk:['Đưa bóng đỏ trước camera: Serial Monitor hiện seen=1.']},
+  {t:'Mắt thông minh ở mũi', adult:false, do:['Dựng đứng XIAO ở lưỡi mũi, mặt có camera quay về trước, buộc dây rút qua 2 rãnh.', 'D6 → 26, D7 → 27, 3V3 và GND chung.'], warn:['Không dùng miếng hàn BAT dưới XIAO.'], chk:['Đưa bóng đỏ trước camera: Serial Monitor hiện seen=1.']},
   {t:'Gom dây cho gọn', adult:false, do:['Ép dây sát thân, dán keo nến hoặc dây rút.'], warn:['Dây cảm biến ngắn hơn 10 cm, tránh xa dây động cơ.'], chk:['Xoay tay mỗi cánh 1 vòng: không đụng gì.']},
   {t:'Lắp cánh quạt', adult:false, do:['Cánh <b>B</b> (quay ngược ↺) vào M1 và M3.', 'Cánh <b>A</b> (quay xuôi ↻) vào M2 và M4. Mặt có chữ lên trên.', 'Đối chiếu với <a href="https://github.com/espressif/esp-drone/blob/master/docs/_static/espdrone_s2_v1_2_diretion.png" target="_blank" rel="noopener">ảnh gốc ESP-Drone</a>: M4-A, M1-B, M3-B, M2-A.'], warn:['Chỉ lắp cánh sau màn 1 (thử không cánh).'], chk:['Ga 15 %: cả 4 cánh thổi gió xuống.']},
 ];
@@ -1609,6 +1625,7 @@ function go(i){
   const lines = (arr, cls, ic) => arr.map(x => `<div class="sline ${cls}">${ICON(ic)}<span>${x}</span></div>`).join('');
   $('#stepBody').innerHTML = `<h3>Bước ${cur + 1}. ${s.t}</h3>${s.adult ? `<p>${ADULT}</p>` : ''}` +
     lines(s.do, 'do', 'hand') + lines(s.warn, 'warn', 'warn') + lines(s.chk, 'chk', 'check') + (FG[cur] ? `<h4 class="fgh">Làm như thế nào</h4>${FG[cur]}` : '');
+  if (window.SIM3D) SIM3D.setStep(cur);
   $$('.part', A).forEach(p => { const n = +p.dataset.step; p.classList.toggle('on', n <= cur + 1); p.classList.toggle('cur', n === cur + 1); });
   propEls.forEach(p => p.style.setProperty('--dur', cur === STEPS.length - 1 ? '1.2s' : '0s'));
   $$('button', list).forEach((b, j) => { b.classList.toggle('cur', j === cur); b.classList.toggle('done', j < cur); });

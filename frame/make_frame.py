@@ -173,3 +173,19 @@ thin = frame.buffer(-0.6)   # thành mỏng hơn 1,2 mm sẽ bị tách rời kh
 print('thành mỏng < 1.2 mm:', 'KHÔNG' if thin.geom_type == 'Polygon' else f'CÓ ({thin.geom_type}, {len(thin.geoms)} mảnh)')
 narrow = frame.difference(frame.buffer(-1.25).buffer(1.25 + 0.05))   # phần hẹp hơn 2,5 mm (trừ góc bo)
 print(f'phần gân hẹp < 2,5 mm: {narrow.area:.1f} mm²')
+
+# ---- xuất JSON cho mô phỏng 3D (src/asm3d.js) ----
+import json  # noqa: E402
+
+
+def poly_json(p, tol=0.05):
+    p = p.simplify(tol)
+    r = lambda ring: [[round(x, 2), round(y, 2)] for x, y in list(ring.coords)[:-1]]
+    return {'outer': r(p.exterior), 'holes': [r(i) for i in p.interiors]}
+
+
+json.dump({'frame': poly_json(frame), 'rings': [poly_json(r) for r in rings],
+           'motors': {k: [round(x, 2), round(y, 2)] for k, (x, y) in MOTORS.items()},
+           'body': list(BODY), 'nose': list(NOSE), 'thickness': T, 'motorHole': MOTOR_HOLE, 'podOD': POD_OD},
+          open(os.path.join(HERE, 'frame-120.json'), 'w'), separators=(',', ':'))
+print('JSON:', os.path.join(HERE, 'frame-120.json'))

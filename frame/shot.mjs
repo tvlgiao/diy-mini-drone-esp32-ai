@@ -1,0 +1,11 @@
+import { createRequire } from 'module';
+import { pathToFileURL } from 'url';
+const require = createRequire('D:/work/Giao-AI-Worker/package.json');
+const puppeteer = require('puppeteer');
+const b = await puppeteer.launch({ headless: true });
+const p = await b.newPage();
+await p.goto(pathToFileURL('D:/work/diy-mini-drone-esp32-ai/frame/frame-120.svg').href);
+const { w, h } = await p.evaluate(() => { const s = document.querySelector('svg'); return { w: +s.getAttribute('width'), h: +s.getAttribute('height') }; });
+await p.setViewport({ width: Math.ceil(w), height: Math.ceil(h) });
+await p.screenshot({ path: 'frame-120.png' });
+await b.close();

@@ -62,9 +62,14 @@ for x in (-43.5, -17.5):
 # dây rút giữ XIAO ở mũi
 for y in (-10.8, 10.8):
     holes.append(slot(46.0, y, 3.4, 1.6, 0))
-# cửa luồn dây xuống mặt dưới (cảm biến) + giảm cân
-holes.append(rbox(-12.0, -6.0, 4.0, 6.0, 2.5))
-holes.append(rbox(8.0, -6.0, 20.0, 6.0, 2.5))
+# cửa khoét giảm cân (kiêm lỗ luồn dây xuống cảm biến mặt dưới): chừa viền và gân >= 2,7 mm quanh mọi rãnh
+LIGHTEN = [(-39.0, -11.5, -22.0, 11.5),   # dưới pin (pin tựa lên 2 viền, dây thun giữ)
+           (-13.0, -11.5, 3.0, 11.5),     # dưới DevKit
+           (7.0, -11.5, 21.5, 11.5),
+           (25.5, -11.5, 33.5, 11.5),
+           (40.0, -6.5, 50.0, 6.5)]       # mũi, dưới XIAO
+for w in LIGHTEN:
+    holes.append(rbox(*w, 3.0))
 # lỗ luồn dây motor dọc tay (gần thân)
 for x, y in MOTORS.values():
     k = 0.52
@@ -166,3 +171,5 @@ devkit = box(-14, -14.2, 37, 14.2)
 print('prop che DevKit (nhìn từ trên):', ', '.join(f'{n}: {Point(x, y).buffer(PROP_D / 2).intersection(devkit).area:.0f} mm²' for n, (x, y) in MOTORS.items()))
 thin = frame.buffer(-0.6)   # thành mỏng hơn 1,2 mm sẽ bị tách rời khi co lại
 print('thành mỏng < 1.2 mm:', 'KHÔNG' if thin.geom_type == 'Polygon' else f'CÓ ({thin.geom_type}, {len(thin.geoms)} mảnh)')
+narrow = frame.difference(frame.buffer(-1.25).buffer(1.25 + 0.05))   # phần hẹp hơn 2,5 mm (trừ góc bo)
+print(f'phần gân hẹp < 2,5 mm: {narrow.area:.1f} mm²')

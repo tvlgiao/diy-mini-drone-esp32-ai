@@ -56,6 +56,10 @@ p{margin:0 0 10px;max-width:68ch}
 .grid{display:grid;gap:14px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
 .g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.framecard{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:center}
+.framecard img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--line)}
+.fbtns{display:flex;flex-wrap:wrap;gap:8px}.fbtns .btn{text-decoration:none;display:inline-block}
+@media (max-width:760px){.framecard{grid-template-columns:1fr}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
 .tile{display:grid;grid-template-columns:64px minmax(0,1fr);gap:2px 14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
 .tile .pic{grid-row:1 / span 3;width:64px;height:64px;border-radius:14px;display:grid;place-items:center;background:var(--soft)}
@@ -319,7 +323,21 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="tile"><div class="pic" style="color:var(--n-mot)"><svg class="ic"><use href="#i-motor"/></svg></div><b>Động cơ + cánh</b><small>8520 + cánh 55 mm</small><span>Thổi gió xuống để bay lên.</span></div>
     <div class="tile"><div class="pic" style="color:var(--n-mot)"><svg class="ic"><use href="#i-switch"/></svg></div><b>Công tắc điện tử</b><small>MOSFET AO3400</small><span>Bật tắt thật nhanh cho động cơ.</span></div>
     <div class="tile"><div class="pic" style="color:var(--n-vbat)"><svg class="ic"><use href="#i-battery"/></svg></div><b>Pin + bộ đổi điện</b><small>LiPo 1S + 3,3 V</small><span>Cấp điện đều cho não và cảm biến.</span></div>
-    <div class="tile"><div class="pic" style="color:var(--frame)"><svg class="ic"><use href="#i-frame"/></svg></div><b>Khung</b><small>90 mm</small><span>Bộ xương có vòng bảo vệ cánh.</span></div>
+    <div class="tile"><div class="pic" style="color:var(--frame)"><svg class="ic"><use href="#i-frame"/></svg></div><b>Khung</b><small>Carbon, chéo 120 mm</small><span>Bộ xương cứng, nhẹ 8 g.</span></div>
+  </div>
+
+  <h3 id="frame-drawing"><svg class="ic"><use href="#i-frame"/></svg>Bản vẽ khung carbon</h3>
+  <div class="card framecard">
+    <a href="frame/frame-120.svg" target="_blank" rel="noopener"><img src="frame/frame-120.png" alt="Bản vẽ khung carbon chéo 120 mm nhìn từ trên, mũi máy bên phải" loading="lazy"></a>
+    <div>
+      <p><b>Tấm carbon 3K dày 1,5 mm</b>, chéo 120 mm, nặng khoảng 8 g. Cánh 55 mm hoặc 65 mm đều vừa.</p>
+      <p class="fbtns">
+        <a class="btn" href="frame/frame-120.dxf" download>Tải file DXF (gửi xưởng CNC)</a>
+        <a class="btn ghost" href="frame/frame-120.svg" target="_blank" rel="noopener">Xem bản vẽ lớn</a>
+        <a class="btn ghost" href="https://github.com/tvlgiao/diy-mini-drone-esp32-ai/tree/main/frame" target="_blank" rel="noopener">Cách đặt cắt</a>
+      </p>
+      <div class="note"><svg class="ic"><use href="#i-adult"/></svg><span><b>Người lớn đặt cắt.</b> Hỏi xưởng có phay carbon không, dặn dao 1 mm. Bụi carbon độc: đeo khẩu trang khi mài.</span></div>
+    </div>
   </div>
 
   <h3><svg class="ic"><use href="#i-cart"/></svg>Danh sách mua</h3>
@@ -1009,7 +1027,7 @@ const BOM = [
   ['vl53', 'Thước đo độ cao: VL53L1X', 1, 152, 'Giữ máy bay ở đúng độ cao', 'keep'],
   ['motor', 'Động cơ 8520 3,7 V (2 quay xuôi + 2 quay ngược)', 4, 156, 'Quay cánh quạt; nhớ mua đủ 2 chiều', 'fix'],
   ['prop', 'Cánh quạt 55 mm, lỗ 0,8 mm (2 cánh A + 2 cánh B)', 4, 65, 'Đẩy không khí xuống', 'keep'],
-  ['frame', 'Khung carbon 1,5 mm tự cắt CNC (chéo 120 mm, file DXF trong repo)', 1, 290, 'Bộ xương cứng, không gãy như khung in 3D', 'keep'],
+  ['frame', 'Khung carbon 1,5 mm tự cắt CNC (chéo 120 mm, xem bản vẽ ở trên)', 1, 290, 'Bộ xương cứng, không gãy như khung in 3D', 'keep'],
   ['mosfet', 'MOSFET AO3400 (mua 5 con)', 5, 8, 'Công tắc điện tử cho động cơ', 'keep'],
   ['misc', 'Điện trở, tụ nhỏ, bảng mạch đục lỗ, đế chip SOT-23', 1, 50, 'Làm mạch động cơ', 'keep'],
   ['lipo', 'Pin LiPo 1S 450 mAh, đầu PH2.0', 2, 226, 'Nguồn điện; xem nhãn 4,2 V hay 4,35 V', 'keep'],
@@ -1075,7 +1093,7 @@ renderBom();
 
 /* ---------- weight calc ---------- */
 const W = [
-  ['fr','Khung (g)',11],['mo','4 động cơ (g)',20],['pr','4 cánh quạt (g)',2.4],['fc','Bộ não, đã bỏ chân cắm (g)',7],
+  ['fr','Khung (g)',9],['mo','4 động cơ (g)',20],['pr','4 cánh quạt (g)',2.4],['fc','Bộ não, đã bỏ chân cắm (g)',7],
   ['se','3 cảm biến (g)',5.5],['ai','XIAO + camera (g)',5.5],['dr','Mạch động cơ + bộ đổi điện (g)',5],['wi','Dây, ốc, đệm (g)',5],
   ['ba','Pin (g)',12],['th','Lực đẩy tối đa của 1 động cơ (g)',28],['ih','Điện 1 động cơ dùng khi bay đứng yên (A)',1.4],['cap','Dung lượng pin (mAh)',450]
 ];

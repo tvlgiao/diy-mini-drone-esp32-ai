@@ -1594,10 +1594,10 @@ const FG = (() => {
 window.SIM3D = window.initAsm3D ? window.initAsm3D(document.getElementById('asm3d')) : null;
 (function(){
   const box = document.getElementById('asm3d'), sv = document.getElementById('asvg');
-  if (!window.SIM3D) { box.hidden = true; sv.hidden = false; document.querySelector('.vtog').hidden = true; return; }
+  if (!window.SIM3D) { box.hidden = true; sv.removeAttribute('hidden'); document.querySelector('.vtog').hidden = true; return; }
   document.querySelectorAll('.vtog .btn').forEach(b => b.addEventListener('click', () => {
     const is3 = b.dataset.v === '3d';
-    box.hidden = !is3; sv.hidden = is3;
+    box.hidden = !is3; sv.toggleAttribute('hidden', is3);   // SVG không có thuộc tính .hidden như phần tử HTML
     document.querySelectorAll('.vtog .btn').forEach(x => x.classList.toggle('ghost', x !== b));
   }));
 })();

@@ -18,7 +18,7 @@
     { parts: ['rings', 'motors'], view: 'pod', labels: [['band1', 'Gen co nhiệt ôm thân'], ['ring1', 'Vòng đệm dán dưới lỗ'], ['motor1', 'M1 quay ngược ↺']] },
     { parts: ['driver'], view: 'rear', labels: [['driver', 'Mạch động cơ: 4 MOSFET + diode']] },
     { parts: ['mwires'], view: 'rear', labels: [['wireM2', 'Dây động cơ luồn qua lỗ tay']] },
-    { parts: ['power'], view: 'rear', labels: [['ph', 'Đầu cắm pin PH2.0'], ['cap', 'Tụ lớn'], ['buck', 'Bộ đổi điện 3,3 V']] },
+    { parts: ['power'], view: 'rear', labels: [['ph', 'Jack pin BT2.0'], ['cap', 'Tụ lớn'], ['buck', 'Bộ đổi điện 3,3 V']] },
     { parts: ['battery', 'strap'], view: 'bottomRear', labels: [['battery', 'Pin 1S nằm ngang'], ['strap', 'Dây ràng luồn 2 rãnh']] },
     { parts: ['devkit', 'ties'], view: 'top', labels: [['devkit', 'Bộ não ESP32'], ['usb', 'Cổng USB quay ra sau'], ['tie1', 'Dây rút']] },
     { parts: ['mpu'], view: 'mpu', labels: [['mpuX', 'X → mũi'], ['mpuY', 'Y → trái'], ['mpu', 'MPU6050 ở giữa']] },
@@ -227,7 +227,7 @@
 
     // ---------- bước 5: đầu cắm pin, tụ, bộ đổi điện ----------
     const gPow = group('power');
-    box(gPow, [-44, 0, DRV_TOP + 1.2], [4.5, 6, 2.4], mats.white, 'ph');           // PH2.0 đực
+    box(gPow, [-44, 0, DRV_TOP + 1.2], [4.5, 6, 2.4], mats.white, 'ph');           // jack BT2.0
     cyl(gPow, [-24, 6.5, DRV_TOP + 4], 3, 8, mats.cap, 'cap');                    // tụ 1000 µF
     cyl(gPow, [-24, 6.5, DRV_TOP + 8.1], 3.02, 0.2, mats.silver);
     box(gPow, [-23, -6.5, DRV_TOP + 1.8], [9, 9, 1.2], mats.pcbBlue, 'buck');     // buck-boost 3,3 V
@@ -236,8 +236,8 @@
     // ---------- bước 6: pin dưới bụng + dây ràng ----------
     const gBat = group('battery');
     const BZ0 = -7, BZ1 = 0;   // pin 7 mm dưới mặt đáy khung
-    box(gBat, [-30.5, 0, (BZ0 + BZ1) / 2], [17, 59, 7], mats.battery, 'battery');
-    box(gBat, [-30.5, 0, BZ0 - 0.05], [12, 40, 0.1], mats.batteryLabel);
+    box(gBat, [-30.5, 0, (BZ0 + BZ1) / 2], [12, 67, 6], mats.battery, 'battery');   // BetaFPV 450 mAh: 67,3 × 11,8 × 6,1 mm
+    box(gBat, [-30.5, 0, BZ0 - 0.05], [9, 44, 0.1], mats.batteryLabel);
     tube(gBat, [[-30.5, 29.5, -3.5], [-30.5, 34, -2], [-36, 30, TOP + 2], [-42, 3, DRV_TOP + 1.2]], 0.55, mats.red);
     const gStrap = group('strap');
     const ST = 0.8, SW = 10, xa = -43.5, xb = -17.5;
